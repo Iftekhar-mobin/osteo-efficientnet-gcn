@@ -1,0 +1,4 @@
+method,deletion_auc_mean,insertion_auc_mean
+gradcam,0.4777,0.8057
+gnnexplainer,0.5500,0.7108
+random_control,0.5554,0.5643

@@ -1,0 +1,67 @@
+{
+  "components": {
+    "aux_branch": 328707,
+    "backbone": 4007548,
+    "graph_branch": 198912,
+    "graph_head": 164611,
+    "projection": 328192
+  },
+  "environment": {
+    "albumentations": "2.0.8",
+    "cuda": "12.8",
+    "cuda_available": true,
+    "gpu": "Tesla T4",
+    "gpu_capability": "7.5",
+    "opencv": "4.13.0",
+    "python": "3.12.13",
+    "sklearn": "1.6.1",
+    "system_ram_gb": 31.3,
+    "torch": "2.10.0+cu128",
+    "torchvision": "0.25.0+cu128"
+  },
+  "gpu_name": "Tesla T4",
+  "latency_cpu": {
+    "batch_size": 1,
+    "device": "cpu",
+    "mean_ms": 65.6488265991211,
+    "median_ms": 65.2149887084961,
+    "runs": 15,
+    "std_ms": 2.0422661304473877,
+    "throughput_img_s": 15.333898544311523,
+    "tta": false
+  },
+  "latency_gpu": {
+    "batch_size": 1,
+    "device": "cuda",
+    "mean_ms": 8.945337295532227,
+    "median_ms": 8.934416770935059,
+    "runs": 50,
+    "std_ms": 0.20842629671096802,
+    "throughput_img_s": 111.92672729492188,
+    "tta": false
+  },
+  "latency_gpu_tta": {
+    "batch_size": 1,
+    "device": "cuda",
+    "mean_ms": 18.65005111694336,
+    "median_ms": 17.9400577545166,
+    "runs": 50,
+    "std_ms": 1.284712314605713,
+    "throughput_img_s": 55.741180419921875,
+    "tta": true
+  },
+  "macs": {
+    "gflops": 1.65049856,
+    "gmacs": 0.82524928,
+    "macs": 825249280,
+    "propagation_macs": 7680000
+  },
+  "parameters_millions": 5.02797,
+  "peak_memory": {
+    "batch_size": 1,
+    "peak_mb": 51.35595703125
+  },
+  "total_parameters": 5027970,
+  "trainable_fraction": 0.9962032390805832,
+  "trainable_parameters": 5008880
+}

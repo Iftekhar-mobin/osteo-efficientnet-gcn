@@ -1,0 +1,182 @@
+{
+  "examples": [
+    {
+      "gnnexplainer": {
+        "deletion_auc": 0.901986214518547,
+        "insertion_auc": 0.9210631877183915,
+        "top_nodes": [
+          23,
+          15,
+          71,
+          35,
+          13,
+          47,
+          73,
+          52,
+          64,
+          72
+        ]
+      },
+      "gradcam": {
+        "deletion_auc": 0.9157604634761811,
+        "insertion_auc": 0.926064956188202
+      },
+      "index": 0,
+      "kind": "correct",
+      "predicted": "Normal",
+      "random_control": {
+        "deletion_auc": 0.9441284835338593,
+        "insertion_auc": 0.9393498718738557
+      },
+      "true": "Normal"
+    },
+    {
+      "gnnexplainer": {
+        "deletion_auc": 0.4254642762243748,
+        "insertion_auc": 0.24710490852594377,
+        "top_nodes": [
+          94,
+          88,
+          34,
+          46,
+          54,
+          44,
+          35,
+          45,
+          55,
+          26
+        ]
+      },
+      "gradcam": {
+        "deletion_auc": 0.3525932550430298,
+        "insertion_auc": 0.561520303785801
+      },
+      "index": 117,
+      "kind": "correct",
+      "predicted": "Osteopenia",
+      "random_control": {
+        "deletion_auc": 0.48563272431492804,
+        "insertion_auc": 0.5540879592299461
+      },
+      "true": "Osteopenia"
+    },
+    {
+      "gnnexplainer": {
+        "deletion_auc": 0.40017408654093745,
+        "insertion_auc": 0.8552327394485475,
+        "top_nodes": [
+          26,
+          64,
+          42,
+          51,
+          33,
+          55,
+          34,
+          35,
+          63,
+          54
+        ]
+      },
+      "gradcam": {
+        "deletion_auc": 0.18859422989189625,
+        "insertion_auc": 0.8929574608802796
+      },
+      "index": 174,
+      "kind": "correct",
+      "predicted": "Osteoporosis",
+      "random_control": {
+        "deletion_auc": 0.350309524871409,
+        "insertion_auc": 0.3269547715783119
+      },
+      "true": "Osteoporosis"
+    },
+    {
+      "gnnexplainer": {
+        "deletion_auc": 0.22318276325240735,
+        "insertion_auc": 0.8106975098140538,
+        "top_nodes": [
+          28,
+          75,
+          52,
+          37,
+          64,
+          19,
+          6,
+          8,
+          53,
+          54
+        ]
+      },
+      "gradcam": {
+        "deletion_auc": 0.15369822001084688,
+        "insertion_auc": 0.7271376808173955
+      },
+      "index": 6,
+      "kind": "extreme error",
+      "predicted": "Osteoporosis",
+      "random_control": {
+        "deletion_auc": 0.23635996645316484,
+        "insertion_auc": 0.25331902438774706
+      },
+      "true": "Normal"
+    },
+    {
+      "gnnexplainer": {
+        "deletion_auc": 0.7993903875350953,
+        "insertion_auc": 0.7198973566293716,
+        "top_nodes": [
+          52,
+          51,
+          58,
+          13,
+          64,
+          15,
+          23,
+          53,
+          14,
+          43
+        ]
+      },
+      "gradcam": {
+        "deletion_auc": 0.7780612826347351,
+        "insertion_auc": 0.9206096291542054
+      },
+      "index": 18,
+      "kind": "adjacent error",
+      "predicted": "Osteopenia",
+      "random_control": {
+        "deletion_auc": 0.7607992619276048,
+        "insertion_auc": 0.7475704550743103
+      },
+      "true": "Normal"
+    }
+  ],
+  "faithfulness": {
+    "gnnexplainer": {
+      "deletion_auc_mean": 0.5500395456142724,
+      "insertion_auc_mean": 0.7107991404272616
+    },
+    "gradcam": {
+      "deletion_auc_mean": 0.4777414902113378,
+      "insertion_auc_mean": 0.8056580061651768
+    },
+    "random_control": {
+      "deletion_auc_mean": 0.5554459922201932,
+      "insertion_auc_mean": 0.5642564164288342
+    }
+  },
+  "lime": [
+    {
+      "index": 0,
+      "label": 0
+    },
+    {
+      "index": 117,
+      "label": 2
+    },
+    {
+      "index": 174,
+      "label": 2
+    }
+  ]
+}

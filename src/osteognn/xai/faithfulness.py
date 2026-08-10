@@ -13,6 +13,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+# numpy renamed trapz -> trapezoid in 2.0; the repo must run under both.
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz
+
 
 def _probability(model, image: torch.Tensor, class_index: int) -> float:
     with torch.no_grad():
@@ -59,8 +62,8 @@ def deletion_insertion(model, image: torch.Tensor, saliency: np.ndarray,
     return {
         "deletion_curve": deletion_curve,
         "insertion_curve": insertion_curve,
-        "deletion_auc": float(np.trapezoid(deletion_curve, dx=1.0 / steps)),
-        "insertion_auc": float(np.trapezoid(insertion_curve, dx=1.0 / steps)),
+        "deletion_auc": float(_trapezoid(deletion_curve, dx=1.0 / steps)),
+        "insertion_auc": float(_trapezoid(insertion_curve, dx=1.0 / steps)),
     }
 
 

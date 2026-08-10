@@ -1,0 +1,9 @@
+quantity,value
+Total parameters,5027970
+Trainable parameters,5008880
+MACs (G),0.825
+GFLOPs,1.650
+GPU latency b1 (ms),8.93
+GPU latency b1 + TTA (ms),17.94
+Peak inference memory (MB),51.4
+CPU latency b1 (ms),65.21

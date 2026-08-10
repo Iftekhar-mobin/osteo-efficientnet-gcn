@@ -182,11 +182,16 @@ def intensity_distribution(samples: dict, classes: list[str], analysis: dict,
     ax_hist.legend(frameon=False)
 
     data = [samples[f"bone_{name}"] for name in classes]
-    parts = ax_box.boxplot(data, labels=classes, patch_artist=True, widths=0.55,
-                           medianprops={"color": "white", "linewidth": 1.4},
-                           flierprops={"marker": ".", "markersize": 2,
-                                       "markerfacecolor": MUTED,
-                                       "markeredgecolor": "none"})
+    box_kwargs = dict(patch_artist=True, widths=0.55,
+                      medianprops={"color": "white", "linewidth": 1.4},
+                      flierprops={"marker": ".", "markersize": 2,
+                                  "markerfacecolor": MUTED,
+                                  "markeredgecolor": "none"})
+    # matplotlib renamed boxplot's `labels` to `tick_labels` in 3.9.
+    try:
+        parts = ax_box.boxplot(data, tick_labels=classes, **box_kwargs)
+    except TypeError:
+        parts = ax_box.boxplot(data, labels=classes, **box_kwargs)
     for patch, name in zip(parts["boxes"], classes):
         patch.set_facecolor(CLASS_COLORS[name])
         patch.set_edgecolor("white")

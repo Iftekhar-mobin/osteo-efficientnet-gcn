@@ -55,7 +55,7 @@
       "total": 292
     }
   },
-  "processed_dir": "data\\processed",
+  "processed_dir": "data/processed",
   "totals": {
     "test": 293,
     "train": 1362,

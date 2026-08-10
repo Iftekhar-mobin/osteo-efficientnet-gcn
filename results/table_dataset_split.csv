@@ -1,0 +1,5 @@
+class,train_orig,val,test,train_aug
+Normal,546,117,117,1000
+Osteopenia,261,56,57,1000
+Osteoporosis,555,119,119,1000
+Total,1362,292,293,3000

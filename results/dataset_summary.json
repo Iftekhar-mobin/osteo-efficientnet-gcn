@@ -1,0 +1,64 @@
+{
+  "leakage_after_augmentation": {
+    "train_test": 0,
+    "train_val": 0,
+    "val_test": 0
+  },
+  "leakage_after_split": {
+    "train_test": 0,
+    "train_val": 0,
+    "val_test": 0
+  },
+  "manifest_counts": {
+    "test": {
+      "Normal": 117,
+      "Osteopenia": 57,
+      "Osteoporosis": 119
+    },
+    "train": {
+      "Normal": 546,
+      "Osteopenia": 261,
+      "Osteoporosis": 555
+    },
+    "val": {
+      "Normal": 117,
+      "Osteopenia": 56,
+      "Osteoporosis": 119
+    }
+  },
+  "processed": {
+    "test": {
+      "augmented": 0,
+      "counts": {
+        "Normal": 117,
+        "Osteopenia": 57,
+        "Osteoporosis": 119
+      },
+      "total": 293
+    },
+    "train": {
+      "augmented": 1638,
+      "counts": {
+        "Normal": 1000,
+        "Osteopenia": 1000,
+        "Osteoporosis": 1000
+      },
+      "total": 3000
+    },
+    "val": {
+      "augmented": 0,
+      "counts": {
+        "Normal": 117,
+        "Osteopenia": 56,
+        "Osteoporosis": 119
+      },
+      "total": 292
+    }
+  },
+  "processed_dir": "data\\processed",
+  "totals": {
+    "test": 293,
+    "train": 1362,
+    "val": 292
+  }
+}

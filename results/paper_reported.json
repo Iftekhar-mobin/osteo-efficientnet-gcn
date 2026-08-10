@@ -1,0 +1,58 @@
+{
+  "_comment": [
+    "Values as printed in the original manuscript before this repository existed.",
+    "They came from a training run whose code and artefacts were not retained, so they",
+    "cannot be verified. scripts/11_compare_to_paper.py diffs a fresh run against them",
+    "so any divergence is visible rather than silent. The manuscript now reports the",
+    "measured values from this repository; these are kept only as the reference point."
+  ],
+  "source": "manuscript revision of 2026-08-04, pre-reproduction",
+  "dataset": {
+    "total_images": 1947,
+    "class_counts": {"Normal": 780, "Osteopenia": 374, "Osteoporosis": 793},
+    "train_original": 1362,
+    "val": 292,
+    "test": 293,
+    "train_augmented": 3000
+  },
+  "model": {
+    "total_parameters": 5027970,
+    "trainable_parameters": 5008880,
+    "graph_edges_directed": 684,
+    "graph_nodes": 100,
+    "feature_map": [1280, 10, 10]
+  },
+  "training": {
+    "epochs_max": 45,
+    "early_stopped_epoch": 41,
+    "best_epoch": 31,
+    "train_acc_epoch1": 0.6377,
+    "train_acc_final": 0.9330,
+    "val_acc_epoch1": 0.6918,
+    "val_acc_best": 0.8733,
+    "val_macro_f1_best": 0.8596,
+    "train_loss_final": 0.45,
+    "val_loss_best": 0.66
+  },
+  "test": {
+    "n": 293,
+    "accuracy": 0.8294,
+    "accuracy_ci": [0.7821, 0.8681],
+    "precision_macro": 0.8115,
+    "recall_macro": 0.8227,
+    "f1_macro": 0.8161,
+    "auc_macro_ovr": 0.9429,
+    "correct": 243,
+    "errors": 50,
+    "adjacent_errors": 31,
+    "extreme_errors": 19,
+    "per_class": {
+      "Normal": {"precision": 0.9107, "recall": 0.8718, "f1": 0.8908, "support": 117,
+                 "recall_ci": [0.799, 0.921]},
+      "Osteopenia": {"precision": 0.7031, "recall": 0.7895, "f1": 0.7438, "support": 57,
+                     "recall_ci": [0.667, 0.875]},
+      "Osteoporosis": {"precision": 0.8205, "recall": 0.8067, "f1": 0.8136, "support": 119,
+                       "recall_ci": [0.727, 0.868]}
+    }
+  }
+}

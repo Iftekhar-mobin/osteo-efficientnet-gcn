@@ -1,0 +1,488 @@
+{
+  "config": {
+    "augment": {
+      "affine_p": 0.8,
+      "affine_rotate_deg": 12,
+      "affine_scale": [
+        0.9,
+        1.1
+      ],
+      "affine_translate": 0.06,
+      "balance": true,
+      "brightness_contrast_p": 0.5,
+      "gauss_noise_p": 0.3,
+      "hflip_p": 0.5,
+      "online": {
+        "color_jitter_brightness": 0.2,
+        "color_jitter_contrast": 0.2,
+        "hflip": true,
+        "random_erasing_p": 0.25,
+        "random_resized_crop_scale": [
+          0.85,
+          1.0
+        ],
+        "rotate_deg": 10
+      },
+      "target_per_class": 1000
+    },
+    "data": {
+      "classes": [
+        "Normal",
+        "Osteopenia",
+        "Osteoporosis"
+      ],
+      "processed_dir": "data/processed_mini",
+      "raw_dir": "data/raw/OS Collected Data",
+      "splits_dir": "data/splits"
+    },
+    "eval": {
+      "bootstrap_n": 50,
+      "ece_bins": 15,
+      "wilson_alpha": 0.05
+    },
+    "inference": {
+      "fusion_weight": 0.6,
+      "tta_hflip": true
+    },
+    "model": {
+      "backbone": "efficientnet_b0",
+      "conv_control": false,
+      "gcn": {
+        "dropout": 0.3,
+        "hidden": 256,
+        "layers": 3,
+        "pooling": "mean_max",
+        "residual": true
+      },
+      "graph": {
+        "connectivity": 8,
+        "grid": 10,
+        "self_loops": true,
+        "symmetric_norm": true
+      },
+      "head": {
+        "aux_mlp": [
+          1280,
+          256,
+          3
+        ],
+        "dropout": 0.3,
+        "graph_mlp": [
+          512,
+          256,
+          128,
+          3
+        ]
+      },
+      "name": "efficientnet_gcn",
+      "pretrained": true,
+      "proj_channels": 256,
+      "trainable_blocks": 6,
+      "use_aux_branch": true,
+      "use_gcn_branch": true
+    },
+    "preprocess": {
+      "clahe": true,
+      "clahe_clip_limit": 2.0,
+      "clahe_tile_grid": 8,
+      "image_size": 320,
+      "norm_mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "norm_std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    },
+    "run_name": "smoke_quick",
+    "seed": 42,
+    "split": {
+      "stratified": true,
+      "test": 0.15,
+      "train": 0.7,
+      "val": 0.15
+    },
+    "train": {
+      "amp": true,
+      "aux_loss_weight": 0.4,
+      "batch_size": 6,
+      "class_weights": "inverse_frequency",
+      "early_stopping_patience": 10,
+      "epochs": 2,
+      "grad_clip_norm": 5.0,
+      "label_smoothing": 0.05,
+      "lr_backbone": 0.0001,
+      "lr_head": 0.001,
+      "num_workers": 0,
+      "optimizer": "adamw",
+      "select_on": "val_macro_f1",
+      "warmup_epochs": 1,
+      "weight_decay": 0.0001
+    },
+    "xai": {
+      "faithfulness_steps": 20,
+      "gnnexplainer_epochs": 200,
+      "gnnexplainer_lr": 0.01,
+      "gradcam_layer": "features.8",
+      "lime_num_features": 8,
+      "lime_num_samples": 1000,
+      "n_examples": 3
+    }
+  },
+  "environment": {
+    "albumentations": "2.0.8",
+    "cuda_available": false,
+    "opencv": "5.0.0",
+    "python": "3.10.0",
+    "sklearn": "1.3.2",
+    "system_ram_gb": 15.7,
+    "torch": "2.5.1+cpu",
+    "torchvision": "0.20.1+cpu"
+  },
+  "git_commit": null,
+  "run": "smoke_quick",
+  "test": {
+    "accuracy": 0.3,
+    "accuracy_ci": [
+      0.16664748268243793,
+      0.47875787458714947
+    ],
+    "auc_macro_ovr": 0.8360088985088986,
+    "auc_per_class": {
+      "Normal": 0.7946428571428571,
+      "Osteopenia": 0.9236111111111112,
+      "Osteoporosis": 0.7897727272727273
+    },
+    "calibration": {
+      "accuracy": 0.3,
+      "bins": [
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.06666666666666667,
+          "lo": 0.0,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.13333333333333333,
+          "lo": 0.06666666666666667,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.2,
+          "lo": 0.13333333333333333,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.26666666666666666,
+          "lo": 0.2,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.3333333333333333,
+          "lo": 0.26666666666666666,
+          "n": 0
+        },
+        {
+          "accuracy": 0.2608695652173913,
+          "confidence": 0.3692207116147746,
+          "hi": 0.4,
+          "lo": 0.3333333333333333,
+          "n": 23
+        },
+        {
+          "accuracy": 0.42857142857142855,
+          "confidence": 0.41332233377865385,
+          "hi": 0.4666666666666667,
+          "lo": 0.4,
+          "n": 7
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.5333333333333333,
+          "lo": 0.4666666666666667,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.6,
+          "lo": 0.5333333333333333,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.6666666666666666,
+          "lo": 0.6,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.7333333333333333,
+          "lo": 0.6666666666666666,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.8,
+          "lo": 0.7333333333333333,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.8666666666666667,
+          "lo": 0.8,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 0.9333333333333333,
+          "lo": 0.8666666666666667,
+          "n": 0
+        },
+        {
+          "accuracy": null,
+          "confidence": null,
+          "hi": 1.0,
+          "lo": 0.9333333333333333,
+          "n": 0
+        }
+      ],
+      "ece": 0.08662733435630796,
+      "mean_confidence": 0.37951109011967976
+    },
+    "classes": [
+      "Normal",
+      "Osteopenia",
+      "Osteoporosis"
+    ],
+    "confusion_matrix": [
+      [
+        0,
+        1,
+        15
+      ],
+      [
+        0,
+        1,
+        5
+      ],
+      [
+        0,
+        0,
+        8
+      ]
+    ],
+    "error_structure": {
+      "adjacent": 6,
+      "correct": 9,
+      "errors": 21,
+      "extreme": 15
+    },
+    "f1_macro": 0.23148148148148148,
+    "f1_macro_ci": [
+      0.10172032828282829,
+      0.44887820512820503
+    ],
+    "fusion_weight": 0.6,
+    "mae_grade": 1.2,
+    "n": 30,
+    "per_class": {
+      "Normal": {
+        "auc": 0.7946428571428571,
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "recall_ci": [
+          0.0,
+          0.1936076805344365
+        ],
+        "support": 16
+      },
+      "Osteopenia": {
+        "auc": 0.9236111111111112,
+        "f1": 0.25,
+        "precision": 0.5,
+        "recall": 0.16666666666666666,
+        "recall_ci": [
+          0.030053369748306635,
+          0.5635028221864702
+        ],
+        "support": 6
+      },
+      "Osteoporosis": {
+        "auc": 0.7897727272727273,
+        "f1": 0.4444444444444445,
+        "precision": 0.2857142857142857,
+        "recall": 1.0,
+        "recall_ci": [
+          0.6755924351161198,
+          1.0
+        ],
+        "support": 8
+      }
+    },
+    "precision_macro": 0.2619047619047619,
+    "qwk": 0.013944223107569598,
+    "recall_macro": 0.3888888888888889,
+    "roc": {
+      "Normal": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0,
+          0.07142857142857142,
+          0.07142857142857142,
+          0.21428571428571427,
+          0.21428571428571427,
+          0.2857142857142857,
+          0.2857142857142857,
+          0.35714285714285715,
+          0.35714285714285715,
+          0.42857142857142855,
+          0.42857142857142855,
+          0.6428571428571429,
+          0.6428571428571429,
+          0.8571428571428571,
+          0.8571428571428571,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.0625,
+          0.4375,
+          0.4375,
+          0.5625,
+          0.5625,
+          0.625,
+          0.625,
+          0.6875,
+          0.6875,
+          0.8125,
+          0.8125,
+          0.875,
+          0.875,
+          0.9375,
+          0.9375,
+          1.0,
+          1.0
+        ]
+      },
+      "Osteopenia": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.08333333333333333,
+          0.08333333333333333,
+          0.25,
+          0.25,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.6666666666666666,
+          0.6666666666666666,
+          0.8333333333333334,
+          0.8333333333333334,
+          1.0,
+          1.0
+        ]
+      },
+      "Osteoporosis": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0,
+          0.13636363636363635,
+          0.13636363636363635,
+          0.18181818181818182,
+          0.18181818181818182,
+          0.36363636363636365,
+          0.36363636363636365,
+          0.45454545454545453,
+          0.45454545454545453,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.125,
+          0.25,
+          0.25,
+          0.375,
+          0.375,
+          0.625,
+          0.625,
+          0.875,
+          0.875,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "top2_accuracy": 0.5333333333333333,
+    "tta": true
+  },
+  "training": {
+    "best": {
+      "epoch": 2,
+      "train_acc": 0.43333333333333335,
+      "train_loss": 1.6144540786743165,
+      "val_acc": 0.43333333333333335,
+      "val_loss": 1.4623438596725464,
+      "val_macro_f1": 0.20155038759689922
+    },
+    "checkpoint": "C:\\Users\\Teacher\\Downloads\\Osteoporosis_EfficientNet_GCN_updated_4_8_2026\\checkpoints\\smoke_quick\\checkpoint.pt",
+    "epochs_run": 2,
+    "final": {
+      "epoch": 2,
+      "lr_backbone": 0.0,
+      "train_acc": 0.43333333333333335,
+      "train_loss": 1.6144540786743165,
+      "val_acc": 0.43333333333333335,
+      "val_loss": 1.4623438596725464,
+      "val_macro_f1": 0.20155038759689922
+    },
+    "history": [
+      {
+        "epoch": 1,
+        "lr_backbone": 0.0001,
+        "train_acc": 0.2833333333333333,
+        "train_loss": 1.978467547893524,
+        "val_acc": 0.36666666666666664,
+        "val_loss": 1.533695101737976,
+        "val_macro_f1": 0.17886178861788615
+      },
+      {
+        "epoch": 2,
+        "lr_backbone": 0.0,
+        "train_acc": 0.43333333333333335,
+        "train_loss": 1.6144540786743165,
+        "val_acc": 0.43333333333333335,
+        "val_loss": 1.4623438596725464,
+        "val_macro_f1": 0.20155038759689922
+      }
+    ],
+    "wall_time_s": 24.104424476623535
+  }
+}

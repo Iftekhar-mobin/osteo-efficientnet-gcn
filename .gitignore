@@ -1,0 +1,45 @@
+# data (never redistributed here -- fetched from Kaggle by scripts/00_download_data.py)
+data/raw/
+data/processed/
+data/splits/*.npz
+
+# credentials -- never commit
+*.kaggle.json
+kaggle.json
+access_token
+.kaggle/
+
+# checkpoints are large; results/ and figures/ are committed, weights are not
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# kaggle run staging
+tools/_payload/
+tools/*.b64
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# latex build artefacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.toc
+
+# local smoke-test subset
+data/processed_mini/

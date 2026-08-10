@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "osteognn"
+version = "1.0.0"
+description = "EfficientNet-GCN: hybrid convolutional-graph osteoporosis severity classification from knee radiographs"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Tasnim Sultana Sintheia" },
+    { name = "Musfique Rahman Muin" },
+    { name = "Pranta Das Gupta" },
+    { name = "Md. Iftekharul Mobin", email = "iftekhar.mobin@aiub.edu" },
+]
+keywords = ["osteoporosis", "graph neural network", "efficientnet", "medical imaging",
+            "explainable ai", "knee radiograph"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "numpy>=1.23,<3",
+    "scipy>=1.9",
+    "scikit-learn>=1.2",
+    "opencv-python>=4.7",
+    "albumentations>=1.3",
+    "matplotlib>=3.6",
+    "pyyaml>=6.0",
+    "pillow>=9.0",
+]
+
+[project.optional-dependencies]
+xai = ["lime>=0.2.0.1", "scikit-image>=0.20"]
+# Only needed to run tests/test_gcn_equivalence.py::test_matches_pytorch_geometric_gcnconv,
+# which checks the dense graph layer against the cited reference implementation.
+pyg = ["torch-geometric>=2.4"]
+kaggle = ["requests>=2.28", "kagglehub>=0.3"]
+dev = ["pytest>=7.0", "psutil>=5.9"]
+
+[project.urls]
+Repository = "https://github.com/Iftekhar-mobin/osteo-efficientnet-gcn"
+Dataset = "https://www.kaggle.com/datasets/mohamedgobara/multi-class-knee-osteoporosis-x-ray-dataset"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

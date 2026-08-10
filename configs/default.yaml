@@ -1,0 +1,110 @@
+# EfficientNet-GCN -- reference configuration.
+# Every value here maps to a row of Table "Training and inference configuration"
+# in the manuscript. Override on the command line:
+#   python scripts/02_train.py --set train.epochs=10 --set seed=7
+
+seed: 42
+run_name: full
+
+data:
+  # Directory holding the three class folders (Normal / Osteopenia / Osteoporosis).
+  # scripts/00_download_data.py writes it here.
+  raw_dir: data/raw/OS Collected Data
+  processed_dir: data/processed
+  splits_dir: data/splits
+  classes: [Normal, Osteopenia, Osteoporosis]
+
+preprocess:
+  clahe: true                 # ablation (iv) sets this false
+  clahe_clip_limit: 2.0
+  clahe_tile_grid: 8
+  image_size: 320             # -> 10x10 terminal feature map -> 100-node graph
+  # ImageNet statistics; the grayscale channel is replicated three ways
+  norm_mean: [0.485, 0.456, 0.406]
+  norm_std: [0.229, 0.224, 0.225]
+
+split:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  stratified: true
+
+augment:
+  # Offline class balancing -- applied to the TRAIN partition only, after the split.
+  balance: true               # ablation (v) sets this false
+  target_per_class: 1000
+  hflip_p: 0.5
+  affine_p: 0.8
+  affine_scale: [0.90, 1.10]
+  affine_translate: 0.06
+  affine_rotate_deg: 12
+  brightness_contrast_p: 0.5
+  gauss_noise_p: 0.3
+  # Online augmentation, applied at every training step.
+  online:
+    random_resized_crop_scale: [0.85, 1.0]
+    hflip: true
+    rotate_deg: 10
+    color_jitter_brightness: 0.2
+    color_jitter_contrast: 0.2
+    random_erasing_p: 0.25
+
+model:
+  name: efficientnet_gcn
+  backbone: efficientnet_b0
+  pretrained: true
+  trainable_blocks: 6         # last 6 of the 9 top-level blocks
+  proj_channels: 256          # 1x1 conv, 1280 -> 256
+  graph:
+    grid: 10
+    connectivity: 8
+    self_loops: true
+    symmetric_norm: true
+  gcn:
+    layers: 3
+    hidden: 256
+    dropout: 0.3
+    residual: true            # around layers 2 and 3
+    pooling: mean_max         # ablation (iii) sets this to "mean"
+  head:
+    graph_mlp: [512, 256, 128, 3]
+    aux_mlp: [1280, 256, 3]
+    dropout: 0.3
+  use_gcn_branch: true        # ablation (i) sets this false
+  use_aux_branch: true
+  conv_control: false         # ablation (vii) sets this true
+
+train:
+  epochs: 45
+  warmup_epochs: 3
+  batch_size: 24
+  optimizer: adamw
+  lr_backbone: 1.0e-4
+  lr_head: 1.0e-3
+  weight_decay: 1.0e-4
+  label_smoothing: 0.05
+  class_weights: inverse_frequency
+  aux_loss_weight: 0.4        # lambda_aux
+  grad_clip_norm: 5.0
+  amp: true                   # mixed precision, disabled inside the graph branch
+  early_stopping_patience: 10
+  select_on: val_macro_f1
+  num_workers: 2
+
+inference:
+  fusion_weight: 0.6          # w in P_final = w*softmax(z_GCN) + (1-w)*softmax(z_CNN)
+  tta_hflip: true             # ablation (vi) sets this false
+
+eval:
+  ece_bins: 15
+  bootstrap_n: 2000
+  wilson_alpha: 0.05
+
+xai:
+  n_examples: 3
+  gradcam_layer: features.8   # final block of the EfficientNetB0 trunk
+  gnnexplainer_epochs: 200
+  gnnexplainer_lr: 0.01
+  lime_num_samples: 1000
+  lime_num_features: 8
+  faithfulness_steps: 20

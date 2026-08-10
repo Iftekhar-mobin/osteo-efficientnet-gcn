@@ -1,0 +1,4 @@
+class,n,whole_mean,whole_sd,bone_mean,bone_sd
+Normal,780,73.74,18.42,159.26,13.50
+Osteopenia,374,57.82,20.55,152.54,8.81
+Osteoporosis,793,62.32,23.68,150.77,14.39

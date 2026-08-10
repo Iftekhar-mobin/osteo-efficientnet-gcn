@@ -1,0 +1,509 @@
+%%%%%%%%%%%%%%%%%%%% author.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample root file for your "contribution" to a proceedings volume
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%% Springer %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{styles/svproc}
+%
+% RECOMMENDED %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+
+% to typeset URLs, URIs, and DOIs
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\def\UrlFont{\rmfamily}
+
+
+% \documentclass[runningheads]{llncs} % LNNS uses LNCS class
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+
+% TikZ styles
+\tikzstyle{block} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,
+                     text centered, draw=black, fill=blue!15, align=center]
+\tikzstyle{bigblock} = [rectangle, rounded corners, minimum width=3.2cm, minimum height=3.0cm, draw=black, fill=gray!10, align=center]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm,
+                       text centered, draw=black, fill=green!15]
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm,
+                        text centered, draw=black, fill=orange!15]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+\begin{document}
+\mainmatter              % start of a contribution
+
+\title{FractureNet: A Hybrid Transformer-Ensemble Framework for Optimized Bone Fracture Detection in Multi-Region X-rays}
+%
+\titlerunning{FractureNet}  % abbreviated title (for running head)
+%                                     also used for the TOC unless
+%                                     \toctitle is used
+%
+% \author{Mian Mohammad Rassel\inst{1} \and Rafin Abrar Rono\inst{1}
+% Md. Sayem Kabir Mian Mohammad Rassel\inst{1} Rafin Abrar Rono\inst{1}
+% Md. Sayem Kabir\inst{1}}
+% %
+% \authorrunning{Mian Mohammad Rassel et al.} % abbreviated author list (for running head)
+
+% %%% list of authors for the TOC (use if author list has to be modified)
+% \tocauthor{Ivar Ekeland, Roger Temam, Jeffrey Dean, David Grove,
+% Craig Chambers, Kim B. Bruce, and Elisa Bertino}
+% %
+% \institute{Princeton University, Princeton NJ 08544, USA,\\
+% \email{I.Ekeland@princeton.edu},\\ WWW home page:
+% \texttt{http://users/\homedir iekeland/web/welcome.html}
+% \and
+% Universit\'{e} de Paris-Sud,
+% Laboratoire d'Analyse Num\'{e}rique, B\^{a}timent 425,\\
+% F-91405 Orsay Cedex, France}
+
+\maketitle              % typeset the title of the contribution
+
+\begin{abstract}
+Bone fractures are a major economic and public healthcare burden worldwide and continue to be responsible for huge numbers of new cases every year. Conventional diagnostic approaches, while standard, are often limited by clinician fatigue and the risk of overlooking subtle fracture lines, particularly in high-volume or resource-constrained environments. Deep learning provides a revolutionary alternative, although current methodologies often falter in face of data diversity and cross-domain robustness. The proposed hybrid PVT-V2-B0–Random Forest system consists of a Pyramid Vision Transformer V2 (PVT-V2-B0) feature extractor operating as a high-level deep representation learning architecture and a Random Forest (RF) classifier inducing strong ensemble-based decision mechanisms. To maximize diagnostic precision, the RF hyperparameters are automatically optimized using the Grey Wolf Optimizer (GWO) metaheuristic. Evaluated on the Bone Fracture Multi-Region X-ray dataset—augmented to a balanced collection across fractured and non-fractured classes—the proposed model achieved 98.80\% accuracy. Performance was additionally confirmed with strong reliability measures, a Cohen’s Kappa value of 0.968 and an MCC value of 0.968. Cross-comparisons and explainable AI (XAI) visualizations (LIME, Grad-CAM++) demonstrate that the model consistently identifies clinically meaningful anatomical structures. These findings indicate that the GWO-optimized PVT-V2-B0–Random Forest model is a powerful, scalable, and interpretable method for automated bone fracture classification in modern healthcare systems.
+
+\keywords{Bone Fracture, Radiographic Classification, Pyramid Vision Transformer, Random Forest, Grey Wolf Optimizer, Deep Learning, Medical Imaging, Explainable AI (XAI).}
+\end{abstract}
+
+\section{Introduction} \label{Introduction}
+Bone fractures are one of the most frequent injuries in all healthcare systems around the world. A broken bone, or fracture, occurs when force is applied to a bone, and the force is stronger than the bone can sustain ~\cite{Krap2022}. Accidents, such as motor vehicle accidents or falls, sports injuries, and overuse, can cause bone fractures in children. These threatened or weakened bones can break through minor stress or with nothing at all. Fractures are frequently associated with pain, restricted mobility, and disability that can impair the sufferer's activities of daily living ~\cite{Spurrier2025}. Fractures are a significant cause of disability or death, especially in the elderly \cite{Dong2022}. The precise and timely diagnosis of fractures is now a critical issue in modern healthcare, where population ageing and the risk of injury are increasing.
+
+The worldwide incidence of bone fractures has been increasing in recent decades. It was recently estimated that there are approximately 178 million incident fractures worldwide each year, with more than 450 million individuals currently experiencing the long term consequences of previous fractures \cite{Zhang2024}. Fracture related diseases account for over 25 million years lived with disability each year, and musculoskeletal injuries are one of the most common causes of physical debilitation \cite{Pugazhendhi2022}. Older people are most at risk, particularly for hip and lower limb fractures, which frequently lead to long term rehabilitation and loss of independence \cite{Hulsbaek2022}. Rapid urbanization, industrial exposure, and traffic injuries in low and middle income countries are also responsible for the increased incidence of fractures \cite{Zhao2025}. These findings underscore the increasing public health relevance of adequate detection and management of fractures.
+
+Apart from medical challenges, bone fractures present an enormous economic and social load. Treatment modalities include acute care, imaging, surgery, hospitalization, and rehabilitation with consequent high health costs. Worldwide, the annual health care cost due to fractures is reportedly over 400 billion dollars \cite{Singer2023}. In addition to the direct costs, fractures usually lead to lost productive time, extended leave from work, and economic burden on families. A large number of patients lose independence, presenting psychological distress and increasing dependence on carers \cite{Cormican2022}. These factors together highlight a demand for effective diagnostic methods to accelerate the time, improve outcomes, and decrease costs of patient care.
+
+Recent developments in artificial intelligence and deep learning bring hope to address these challenges. Deep learning models, including convolutional neural networks (CNNs), have the capability to automatically process medical images like X-rays and CT scans in identifying fractures with high precision \cite{Kumar2024}. They can detect fainter fracture lines that could be missed in manual interpretation, therefore minimizing diagnostic errors and clinician fatigue. AI tools also aid in the classification of fractures, planning treatment, and monitoring healing. Explainable AI methods facilitate increased clinical trust by offering visual interpretations of model decisions. Particularly in resource-poor settings, deep learning will afford rapid, scalable, low-cost diagnostic support. The combination of these technologies is a major advancement towards increased accuracy, efficiency, and availability of bone-fracture care worldwide.
+
+\begin{itemize} 
+\item Developed a hybrid PVT-V2-B0–Random Forest framework, utilizing the Grey Wolf Optimizer (GWO) to automatically tune ensemble hyperparameters for enhanced diagnostic precision. 
+\item Utilized a multi-region bone fracture X-ray dataset containing 9,548 images, augmented to 10,000 balanced samples across two classes (Fractured and Non-Fractured) with a 70/15/15 split. 
+\item Achieved a peak test accuracy of 98.80\% with high reliability indicators, including a Cohen's Kappa of 0.968 and an MCC of 0.968. 
+\item Validated model robustness through comprehensive ablation studies and explainable AI (XAI) techniques, including LIME, Grad-CAM, and Grad-CAM++, to ensure semantically relevant diagnostic interpretations. 
+\end{itemize}
+
+The paper is organized as follows: Section~\ref{Introduction} introduces the topic, Section~\ref{Literature} reviews related work, Section~\ref{methodology} describes the methodology, Section~\ref{results} presents results and analysis, and Section~\ref{conclusion} concludes the study.
+
+
+\section{Literature Review} \label{Literature}
+
+
+Recent works in bone fracture detection report a trend from conventional CNNs to hybrid and transfer learning methods with an increased performance, but remains sub- optimal. As reported in Table\ref{tab:bone_fracture_lit_review}, Aldhyani et al. \cite{Aldhyani2024} al used ResNet152V2, VGG16 and DenseNet201 obtaining accuracy rates between 92.15\% and 97.35\%, demonstrating the sensitivity to finetuning methods and the quality of patient data. Parvin and Rahman\cite{Parvin2023} compared CNN with MobileNet on Kaggle X-ray, and obtained the accuracy of 98\% and 86\%, showing the constraintiveness of simpler architectures. Alwzwazy et al. \cite{Alwzwazy2025} demonstrated 70–82.5\% accuracy across cross-domain datasets, showing generalization difficulties. Mahmoud et al. \cite{Mahmoud2025} additionally used imaging and temporal clinical data and obtained 84.2\%, while Kumar et al. \cite{Kumar2020} achieved 92.44\% validation accuracy, however they overfitted. Together, these papers show advancements in the task of fracture detection and point out challenges including diversity in data distribution, cross domain robustness, and computational efficiency.
+
+\vspace{-2em}
+
+\begin{table}[!h]
+\caption{Comparative Analysis of Recent Studies on Bone Fracture Detection}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{
+p{2.5cm}@{\hspace{11pt}}
+p{2.2cm}@{\hspace{10pt}}
+p{2.2cm}@{\hspace{10pt}}
+p{4.0cm}
+}
+\hline
+\multicolumn{1}{l}{\rule{0pt}{4pt}\textbf{Study}} &
+\multicolumn{1}{l}{\textbf{Dataset}} &
+\multicolumn{1}{l}{\textbf{Results}} &
+\multicolumn{1}{l}{\textbf{Limitations}} \\
+\hline
+Aldhyani et al. (2024)~\cite{Aldhyani2024} & 10,581 X-ray images & 97.35\% Accuracy & Performance varies across architectures; limited dataset-specific fine-tuning \\
+Parvin and Rahman (2023)~\cite{Parvin2023} & 5,000 Kaggle X-ray images & 86\% (CNN), 98\% (MobileNet) & CNN underperforms; lacks multi-modal validation and deeper feature analysis \\
+Alwzwazy et al. (2025)~\cite{Alwzwazy2025} & Cross-domain datasets (D1, D2, D3) & 82.5\% Accuracy & Domain adaptation challenges; significant accuracy drop on unseen datasets \\
+Mahmoud et al. (2025)~\cite{Mahmoud2025} & Clinical rehabilitation dataset & 84.2\% Accuracy & Limited sample size; temporal model complexity increases computational cost \\
+Kumar et al. (2020)~\cite{Kumar2020} & Long, short, and flat bone X-rays & 92.44\% Validation Accuracy & Early model design; potential overfitting; limited data diversity \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab:bone_fracture_lit_review}
+\end{table}
+
+
+\section{Methodology} 
+\label{methodology}
+The study was initiated with an extensive literature survey to establish research goals, followed by the design and evaluation of datasets and models against benchmark methods to determine the optimal approach.
+
+
+
+\subsection{Dataset Description}
+A Bone Fracture Multi-Region X-ray Data (\cite{data}) is utilized, which offers 9,548 radiographic images over different regions of the body such as upper and lower limbs, lumbar, hip and knee. The dataset is split into 2 categories: fractured (4,908 images) and not fractured (4,640 images). Such images maintain radiographic attributes of healthy and fractured bones in standard imaging situations. In this study, the two class labels are fractured and not fractured. This dataset serves as a robust benchmark for developing and assessing machine learning, as well as deep learning models towards binary fracture diagnosis in multi-region x-ray imaging.
+
+\subsection{Data preprocessing}
+
+All images were resized to $224 \times 224$ to have the same input dimension across the models. The processing pipeline started with a Reinhard normalization, used for the same aim to normalize global contrast followed in a second step by an aggresive local contrast enhancement through the Contrast Limited Adaptive Histogram Equalization (CLAHE) to enhance subtle structural bone features. The images were subsequently smoothed with a Gaussian filter using a $3 \times 3$ kernel to eliminate noise, gamma corrected with $\gamma  of 1.8$, and sharpened using an aggressive $3 \times 3$ kernel to enhance fine fractures lines.  To have a more balanced distribution, the dataset was augmented to 5000 samples per class by horizontal flips, rotations and Gaussian noise.  The pre-processed images were dumped in the same class-wise directory structure for supervised learning. This enhancement method achieves more visual differentiation and consistency, and is conducive to robust feature extraction and better classification performance.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=.75\columnwidth]{templates/Img/preprocessed.jpg}
+    \caption{Samples of preprocessed images}
+    \label{fig:preprocessed}
+\end{figure}
+
+\subsection{Dataset Split}
+To maintain a balanced learning process and ensure a reliable evaluation, the dataset was partitioned into 70\% for training, 15\% for validation, and 15\% for testing. The specific distribution of samples across each class is detailed in Table~\ref{tab:dataset_split}.
+
+
+
+\begin{table}[!h]
+\caption{Dataset Distribution After Preprocessing and Augmentation}
+\begin{center}
+\begin{tabular}{r@{\quad}rrrr}
+\hline
+\multicolumn{1}{l}{\rule{0pt}{4pt}\textbf{Class}} & 
+\multicolumn{1}{l}{\textbf{Training}} & 
+\multicolumn{1}{l}{\textbf{Validation}} & 
+\multicolumn{1}{l}{\textbf{Testing}} & 
+\multicolumn{1}{l}{\textbf{Total}} \\
+\hline\rule{0pt}{4pt}
+Fractured & 3500 & 750 & 750 & \textbf{5000} \\
+Non-Fractured & 3500 & 750 & 750 & \textbf{5000} \\
+\hline\rule{0pt}{4pt}
+\textbf{Total} & \textbf{7000} & \textbf{1500} & \textbf{1500} & \textbf{10000} \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab:dataset_split}
+\end{table}
+
+
+
+
+
+\subsection{Proposed model}
+
+The proposed approach employs a Pyramid Vision Transformer V2 (PVT-V2-B0)~\cite{pvt} backbone, pre-trained on ImageNet, as the primary deep feature extractor. The network is finetuned by removing the original classification head to extract high-level discriminative feature representation directly from X-ray images. The resulting embeddings are processed by Batch Normalization and a Dropout layer with 0.5 drop factor, which makes the training more stable and regularizes better in order to avoid overfitting in embedding space.
+
+For classification, the fine-tuned deep features are fed to a Random Forest (RF) classifier, that uses ensemble learning for robust decision making.  In order to improve the performance of RF, important hyperparameters including number of estimators and maximum tree depth are automatically tuned with Grey Wolf Optimizer (GWO). This metaheuristic technique uses experimentation for a selective search of the hyperparameter space and aims to maximize the classification accuracy without exhaustive fine tuning.
+
+The model is trained using the AdamW optimizer leveraging mixed-precision training to enhance computational efficiency during the feature learning phase. The training strategy involves the ReduceLROnPlateau scheduler and early stopping with a patience of 3 epochs to obtain comparable convergence and avoid overfitting.  Taking the advantage of transformer-based global feature extraction and based on a GWO-optimized ensemble classifiers, this proposed network offers an effective as well as understandable framework to conduct a binary bone fracture classification.  The architecture of the proposed model is illustrated in Fig.~\ref{fig:propose}.
+
+\begin{figure}[!h]
+    \centering
+\includegraphics[width=1\columnwidth]{templates/Img/methodology diagram skin.png}
+    \caption{Proposed Model Architecture}
+    \label{fig:propose}
+\end{figure}
+
+
+
+\subsection{Hyperparameters}
+
+
+The proposed model training employs Cross-Entropy Loss as the objective function, as defined in Eq.~\ref{eq:crossentropy}, to quantify the discrepancy between predicted class probabilities and ground-truth labels. The deep feature extractor is optimized by the AdamW optimizer (Eq. \ref{eq:adamw}), which incorporates decoupled weight decay to improve convergence stability. A ReduceLROnPlateau learning rate scheduler automatically decreases the learning rate when no improvement is observed using validation loss, and early stopping is also used to avoid overfitting.  To optimize the computational efficiency, mixed-precision training with AMP is utilized. All input images are resized to $224 \times 224$ and augmented with random horizontal flipping to improve model robustness.
+
+In classification, a PVT-V2-B0 backbone produces deep CNN-based feature embeddings which are then forwarded to an RF classifier that allows decision count by ensemble. As, the classification accuracy of RF is highly dependent on its hyper-parameters, number of estimators and Maximum tree depth are tuned again using using the Grey Wolf Optimizer (GWO) metaheuristic.  GWO is a population-based metaheuristic algorithm based on leadership hierarchy and hunting mechanism of grey wolves, which makes balance between exploration and exploitation dynamically.  The GWO-based optimization strategy used in this work is mathematically formulated in Eq.~\ref{eq:gwo}. The complete set of training and optimization hyperparameters is summarized in Table~\ref{tab:hyperparameters}.
+
+
+
+\begingroup
+\small
+\begin{equation}
+\label{eq:crossentropy}
+L_{CE} = - \frac{1}{N} \sum_{i=1}^{N} \sum_{c=1}^{C} y_{i,c} \log(\hat{y}_{i,c})
+\end{equation}
+
+\begin{equation}
+\label{eq:adamw}
+\theta_{t+1} = \theta_t - \eta \left( \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} + \lambda \theta_t \right)
+\end{equation}
+
+\begin{equation}
+\label{eq:gwo}
+\vec{X}(t+1) = \frac{\vec{X}_1 + \vec{X}_2 + \vec{X}_3}{3}
+\end{equation}
+\endgroup
+
+\begin{table}[!h]
+\caption{Hyperparameters for PVT--Random Forest Model with Grey Wolf Optimizer}
+\begin{center}
+\begin{tabular}{r@{\quad}l}
+\hline
+\multicolumn{1}{l}{\rule{0pt}{4pt}\textbf{Parameter}} & 
+\multicolumn{1}{l}{\textbf{Value}} \\
+\hline
+\multicolumn{2}{l}{\rule{0pt}{4pt}\textbf{Training Hyperparameters}} \\
+batch\_size & 32 \\
+num\_epochs & 100 \\
+learning\_rate & $1 \times 10^{-6}$ \\
+optimizer & AdamW \\
+loss\_function & CrossEntropyLoss \\
+scheduler & ReduceLROnPlateau \\
+early\_stopping\_patience & 3 \\
+mixed\_precision & Enabled (AMP) \\
+\hline
+\multicolumn{2}{l}{\rule{0pt}{4pt}\textbf{Model Parameters}} \\
+image\_size & $224 \times 224$ \\
+backbone & PVT-V2-B0 \\
+dropout\_rate & 0.5 \\
+seed & 42 \\
+\hline
+\multicolumn{2}{l}{\rule{0pt}{4pt}\textbf{Random Forest + Grey Wolf Optimizer}} \\
+classifier & Random Forest \\
+tuned\_parameters & $n_{estimators}$, max\_depth \\
+n\_estimators\_range & [50, 300] \\
+max\_depth\_range & [5, 30] \\
+number\_of\_agents & 10 \\
+max\_iterations & 20 \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab:hyperparameters}
+\end{table}
+
+
+
+
+
+
+
+
+\subsection{Model Evaluation Metrics}
+Performance of the model was assessed using a range of quantitative measures. Accuracy, F1-score, Cohen’s Kappa and Matthew's Correlation Coefficient (MCC) were used to measure the accuracy of prediction and alignment with ground-truth, while Specificity, Fowlkes–Mallows Index (FMI), Critical Success Index (CSI) provided a finer-grained analysis of classification reliability. Learning behaviour and possible overfitting were evaluated using the training and validation curves, while an extensive overview of class-by-class performance was reported through a confusion matrix. The sensitivity/precision trade-offs were quantified with ROC and Precision-Recall curves. In addition, the cumulative gain, lift, calibration and entropy plots were used for evaluating ranking capability of the model, goodness of calibration of the estimator and confidence in predictions respectively.
+
+
+
+\subsection{Explainable Artificial Intelligence (XAI) Techniques}
+To improve model interpretability, Local Interpretable Model-agnostic Explanations (LIME), as defined in Eq.~\ref{eq lime}, generate local surrogate models that approximate the decision boundaries of complex classifiers around specific instances~\cite{lime}. Transparency is further enhanced through Gradient-weighted Class Activation Mapping (Grad-CAM), formulated in Eq.~\ref{eq gradcam}, and its refined extension Grad-CAM++ (Eq.~\ref{eq:gradcampp}), which visualize class-discriminative regions in input images using gradient-based attribution~\cite{gradcam, gradcampp}.
+
+\begingroup \small
+
+\begin{equation} \label{eq lime} \xi(x) = \mathop{\mathrm{arg,min}}_{g \in G} \sum_i \pi_x(z_i) (f(z_i) - g(z_i))^2 + \Omega(g) \end{equation}
+
+\begin{equation} \label{eq gradcam} L_{\mathrm{Grad\text{-}CAM}}^c = \mathrm{GeLU}\left(\sum_k \alpha_k^c A^k \right) \end{equation}
+
+\begin{equation} \label{eq:gradcampp} L_{\mathrm{Grad\text{-}CAM^{++}}}^c = \mathrm{GeLU}\left(\sum_k \alpha_k^{c++} A^k \right) \end{equation} \endgroup
+
+
+\section{Results and Ananlysis}\label{results}
+The results section is divided into three components: model selection, performance evaluation, and outcome visualization through charts and plots.
+
+
+
+
+\subsection{Proposed Model Matrix Analysis}
+The model achieved a test accuracy of 98.80\%, and the corresponding Cohen’s Kappa value is 0.968, representing almost perfect agreement beyond random chance (Table~\ref{tab:per_class_metrics}). Both “fractured” and “not fractured” included classes showed the same performance, and 0.988 of precision, recall, and F1-score were reached for each class (showing that the classifier is extremely symmetric or well-balanced). The shared specificity value of 0.988 for both classes corroborates the excellent ability of this model to accurately detect non-fractured samples. The Matthews Correlation Coefficient (MCC = 0.968) and Fowlkes–Mallows Index (FMI = 0.988) also indicate the strong discriminatory power of predicted vs true sets, which is corroborated by the Critical Success Index (CSI = 0.968). In general, the proposed model provides consistent and robust diagnostic performance, which is appropriate for binary bone fracture diagnosis.
+
+\begin{table}[!h]
+\caption{Detailed Per-Class Performance Metrics (Test Results).}
+\begin{center}
+\begin{tabular}{r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r@{\hspace{8pt}}r}
+\hline
+\multicolumn{1}{l}{\rule{0pt}{4pt}\textbf{Class}} &
+\multicolumn{1}{l}{\textbf{Acc}} &
+\multicolumn{1}{l}{\textbf{Prec}} &
+\multicolumn{1}{l}{\textbf{Rec}} &
+\multicolumn{1}{l}{\textbf{F1}} &
+\multicolumn{1}{l}{\textbf{Spec}} &
+\multicolumn{1}{l}{\textbf{MCC}} &
+\multicolumn{1}{l}{\textbf{Kappa}} &
+\multicolumn{1}{l}{\textbf{FMI}} &
+\multicolumn{1}{l}{\textbf{CSI}} \\
+\hline\rule{0pt}{4pt}
+Not Fractured & 0.988 & 0.988 & 0.988 & 0.988 & 0.988 & 0.968 & 0.968 & 0.988 & 0.968 \\
+Fractured     & 0.988 & 0.988 & 0.988 & 0.988 & 0.988 & 0.968 & 0.968 & 0.988 & 0.968 \\
+\hline\rule{0pt}{4pt}
+\textbf{Overall} & \textbf{0.988} & \textbf{0.988} & \textbf{0.988} & \textbf{0.988} & \textbf{0.988} & \textbf{0.968} & \textbf{0.968} & \textbf{0.988} & \textbf{0.968} \\
+\hline
+\end{tabular}
+\end{center}
+\vspace{-2em}
+\label{tab:per_class_metrics}
+\end{table}
+
+
+
+\subsection{Ablation Study}
+Further, an ablation study was performed (Table~\ref{tab:ablation_study_pvtrf}) to study the impact of each part in the framework. The full PVT-V2-B0 + Random Forest optimized by GWO provided the highest accuracy of 98.80\%, which demonstrated that transformer-based deep features combined with optimized ensemble learning are effective. The accuracy decreased to 96.85\% and the lack of a metaheuristic optimizer yielded worse performance. Removing the Random Forest as well, and only keeping the PVT classification head led to 95.10\% accuracy (Table 3). It is worth noting that the baseline model, not using depth feature extraction or ensemble learning, could only obtain chance level (50.00\%) performance, which shows PVT features and GWO-optimized Random Forest play a vital role in guaranteeing reliable fracture classification system.
+
+
+\begin{table}[!h]
+\caption{Ablation Study of the Proposed PVT--Random Forest Model}
+\begin{center}
+\begin{tabular}{r@{\quad}ccr}
+\hline
+\multicolumn{1}{l}{\rule{0pt}{4pt}\textbf{Variant}} & 
+\multicolumn{1}{l}{\textbf{PVT-V2-B0}} & 
+\multicolumn{1}{l}{\textbf{RF / GWO}} & 
+\multicolumn{1}{l}{\textbf{Accuracy}} \\
+\hline\rule{0pt}{4pt}
+Full Model        & \checkmark & \checkmark (GWO) & \textbf{98.80\%} \\
+w/o GWO           & \checkmark & RF (default)    & 96.85\% \\
+w/o RF            & \checkmark & --              & 95.10\% \\
+Only Classifier   & --         & --              & 50.00\% \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab:ablation_study_pvtrf}
+\end{table}
+
+
+
+\subsection{Comparison of Models, Classifiers, and Optimizers}
+
+The results summarized in Table~\ref{tab:performance_comparison} show that the proposed PVT-V2-B0 + Random Forest optimized using Grey Wolf Optimizer (GWO) achieved the highest accuracy of 98.80\%, accompanied by strong reliability indicators (Kappa = 0.976, MCC = 0.975, FMI = 0.980, and CSI = 0.970). This performance clearly surpasses both the best standalone classifier baseline, Random Forest with GWO (96.85\%), and the best CNN feature extractor used alone, PVT-V2-B0 with a linear classification head (95.10\%). These results confirm that integrating transformer-based deep feature extraction with ensemble learning, further enhanced through metaheuristic optimization, yields robust and reliable performance for accurate binary bone fracture classification.
+
+\begin{table}[!h]
+\caption{Performance Comparison of the Proposed PVT--Random Forest Model}
+\begin{center}
+\begin{tabular}{r@{\hspace{12pt}}c@{\hspace{12pt}}c@{\hspace{12pt}}c@{\hspace{12pt}}c@{\hspace{12pt}}c}
+\hline
+\multicolumn{1}{l}{\rule{0pt}{4pt}\textbf{Model}} & 
+\multicolumn{1}{l}{\textbf{Acc.}} & 
+\multicolumn{1}{l}{\textbf{Kappa}} & 
+\multicolumn{1}{l}{\textbf{MCC}} & 
+\multicolumn{1}{l}{\textbf{FMI}} & 
+\multicolumn{1}{l}{\textbf{CSI}} \\
+\hline
+\multicolumn{6}{l}{\rule{0pt}{4pt}\textbf{CNN Feature Extractors}} \\
+PVT-V2-B0      & 95.10\% & 0.951 & 0.949 & 0.955 & 0.944 \\
+DenseNet121    & 93.85\% & 0.939 & 0.937 & 0.943 & 0.931 \\
+ResNet50       & 92.40\% & 0.924 & 0.922 & 0.928 & 0.915 \\
+\hline
+\multicolumn{6}{l}{\rule{0pt}{4pt}\textbf{Classifier Models}} \\
+RF (GWO)       & 96.85\% & 0.966 & 0.964 & 0.969 & 0.960 \\
+RF             & 95.10\% & 0.951 & 0.949 & 0.955 & 0.944 \\
+SVM (Linear)   & 91.70\% & 0.917 & 0.915 & 0.921 & 0.908 \\
+LR             & 89.30\% & 0.893 & 0.891 & 0.897 & 0.883 \\
+\hline
+\multicolumn{6}{l}{\rule{0pt}{4pt}\textbf{Proposed Model}} \\
+\textbf{PVT-V2-B0 + RF (GWO)} & \textbf{98.80\%} & \textbf{0.976} & \textbf{0.975} & \textbf{0.980} & \textbf{0.970} \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab:performance_comparison}
+\end{table}
+
+
+
+
+
+
+
+\subsection{Curve analysis for the proposed model}
+
+Fig. \ref{fig:tvl} and Fig. \ref{fig:tva} show the training process of the proposed model PVT-V2-B0 – Random Forest. The loss curves tend to sharply and steadily decrease, with the training loss converging to  0.02 and the validation loss saturated at  0.04, which demonstrates reliable optimization performance of the overall system. Similarly, the accuracy curves show a consistent trend of increasing throughout training with validation accuracy plateauing around 98.8\%, while training accuracy reaches nearly 99.8\%. The proximity of training and validation curves indicates that the proposed model learns well with little overfitting, thus validating the ability for robustness and generalization
+
+\begin{figure}[!h]
+    \centering
+    \subfloat[Accuracy Curve\label{fig:tva}]{%
+        \includegraphics[width=0.48\linewidth, height=0.48\linewidth]{templates/Img/TVA.png}
+    }
+    \subfloat[Loss Curve\label{fig:tvl}]{%
+        \includegraphics[width=0.48\linewidth, height=0.48\linewidth]{templates/Img/TVL.png}
+    }
+    \caption{Training Validation curves}
+    \label{fig:tval}
+\end{figure}
+
+Fig. ~\ref{fig:cm} depicts the confusion matrix between fractured and non-fractured classes for the PVT-V2-B0–Random Forest model proposed, which shows a strong classification for both classes. The matrix is clearly diagonally dominant, with 738 correct classifications for each class, and only 12 misclassifications to entries off the diagonal. The well distributed error and lack of confusion between classes verify the strength and reliability of the proposed model for effective binary bone fracture detection.
+
+\begin{figure}[!h]
+    \centering
+\includegraphics[width=.75\columnwidth]{templates/Img/cm.png}
+    \caption{Confusion Matrix}
+    \label{fig:cm}
+\end{figure}
+
+Fig. ~\ref{fig:evaluation-curves1} shows the reliability and discriminant ability of the proposed PVT-V2-B0 Random Forest model on the test set. It is observed from the overall gain chart that both fractured and non- fractured samples in Fracture/Non-fractured reservoir property are concentrated in the top 50\% of ranked predictions, giving a very good ranking potential well above randomness. In addition, the lift curves show very high targeting efficiency: both classes start with a lift of approximately 2.0, which steadily decreases towards the baseline as expected. Moreover, the entropy curves have low uncertainty for extensive coverage of decision thresholds, indicating confident and robust predictions. Overall, both these curves confirm that the binary bone fracture classification framework is robust, reliable, and has good decision making power.
+
+
+\begin{figure}[!h]
+    \centering
+    \subfloat[Calibration Plot\label{fig:calibration}]{%
+        \includegraphics[width=0.4\linewidth, height=0.4\linewidth]{templates/Img/calibration.png}
+    }
+    \subfloat[Entropy Curve\label{fig:entropy}]{%
+        \includegraphics[width=0.4\linewidth, height=0.4\linewidth]{templates/Img/entropy.png}
+    }\\[-0.5em]
+    \subfloat[Cumulative Gain Chart\label{fig:gain}]{%
+        \includegraphics[width=0.4\linewidth, height=0.4\linewidth]{templates/Img/gain.png}
+    }
+    \subfloat[Lift Curve\label{fig:lift}]{%
+        \includegraphics[width=0.4\linewidth, height=0.4\linewidth]{templates/Img/lift.png}
+    }
+    \caption{Evaluation curves: Calibration, Entropy, Gain, and Lift}
+    \label{fig:evaluation-curves1}
+\end{figure}
+
+Fig. \ref{fig:evaluation-curves2} presents happy to be robust to the PVT-V2-B0-Random Forest model as being robust to various evaluation curves. The ROC curves demonstrate good separation of both fracture and non-fracture classes, with an AUC of 0.9986, revealing almost perfect discrimination. Again, the Precision–Recall curves exhibit high precision values throughout nearly all recall levels with APs of 0.9988 and 0.9985 for fracture and non-fracture cases that are shown (respectively). The smooth and stable curves demonstrate the stability of the model across various operating points, which justifies its excellent generalization ability for binary fractures classification.
+
+
+\begin{figure}[!h]
+    \centering
+    \subfloat[ROC Curve\label{fig:roc}]{%
+        \includegraphics[width=0.4\linewidth, height=0.4\linewidth]{templates/Img/roc.png}
+    }
+    \subfloat[PR Curve\label{fig:pr}]{%
+        \includegraphics[width=0.4\linewidth, height=0.4\linewidth]{templates/Img/pr.png}
+    }\\[-0.5em]
+    \caption{Evaluation curves: ROC, PR, PR vs T, and F1 vs T}
+    \label{fig:evaluation-curves2}
+\end{figure}
+
+
+
+\subsection{Comparison with Related studies}
+
+In recent years, hybrid and transfer learning approaches are being used for improved fracture detection on bone studies obtained through thick tissues. Aldhyani et al. \cite{Aldhyani2024} utilized ResNet152V2, VGG16 and DenseNet201 giving up to 97.35\% accuracy but poor generalization. Parvin and Rahman\cite{Parvin2023} applied MobileNet with 98\% accuracy, surpassing classical CNNs. Alwzwazy et al. \cite{Alwzwazy2025} presented that FracNet was tested on datasets ranging from 70-82.5\%, with less cross-domain generalization performance. Mahmoud et al. \cite{Mahmoud2025} proposed a CNN–RNN fusion model for fracture recovery and reported 84.2\% performance, while Kumar et al. \cite{Kumar2020} could get up to 92.44\% but suffered from overfitting because of less data. In contrast, the proposed ViT–ResNet Ensemble yielded an accuracy of 97.53\% with strong reliability metrics (Kappa = 0.964, MCC = 0.964), which was superior to most existing works. Being motivated by integrating global attention transformer into spatial accurate CNN to achieve better generalization, well-balanced learning and robustness, it is a kind of automation in bone fracture detection tasks.
+
+\subsection{Explainable AI Results}
+
+\begin{figure}[!h]
+    \centering
+\includegraphics[width=.85\columnwidth]{templates/Img/xai.png}
+    \caption{Explainable AI: GradCAM}
+    \label{fig:xai}
+\end{figure}
+
+Fig. ~\ref{fig:xai} shows interpretability analysis of the proposed PVT-V2-B0–Random Forest model via LIME, Grad-CAM, and Grad-CAM++ for fractured and not fractured cases. For all fractured samples, the activated regions are consistently close to clinically relevant fracture areas, while on non-fractured images, activations are more widespread and less localized. LIME is confined to local superpixel regions that largely drive the classification decision, whereas Grad-CAM and Grad-CAM++ represent more general, class-discriminative anatomical structures related to fracture patterns. These visual explanations show that the model’s predictions are based on semantically relevant radiographic patterns, and thus increase the interpretability and trust in its diagnostic performance.
+
+
+
+
+
+
+
+\section{Conclusion} \label{conclusion}
+
+This study introduced a hybrid PVT-V2-B0–Random Forest framework for the automated detection of bone fractures from multi-region X-ray imagery. Pyramid Vision Transformer V2 (PVT-V2-B0) pre-trained on ImageNet as the backbone, was adopted to generate high quality, discriminative global feature representations, which were classified by a random forest method. For both vertical and horizontal planes with-the use of the RF, hyper-parameters (HPs) were automatically tuned using a meta-heuristic algorithm Grey Wolf Optimizer (GWO), without wasting much time in manual effort of exhaustive fine-tuning to have effectively highest possible classification accuracy. Experimental results on a 10,000 image augmented dataset was superior with a peak test accuracy of 98.80\%, and strong reliability based indices (cKappa = 0.968; MCC = 0.968). These findings provide an effective, computationally efficient and clinically interpretable fracture diagnosis solution that outperforms traditional CNN baselines.
+
+Future work may focus on expanding the framework to include multi-modal clinical data, deploying the architecture for real-time mobile diagnostic support in resource-constrained environments, and further refining explainable AI techniques like Grad-CAM++ to provide more fine-grained localization of subtle cortical breaks across a wider array of musculoskeletal injuries is another possible future direction.
+
+
+\begin{thebibliography}{6}
+\bibitem{Krap2022} Krap, T., Duijst, W., Aalders, M.C.G., Oostra, R.-J., et al.: Mechanical or thermal damage: differentiating between underlying mechanisms as a cause of bone fractures. Int. J. Legal Med. 136(4), 1133--1148 (2022). \url{doi:10.1007/s00414-022-02749-6}
+
+\bibitem{Spurrier2025} Spurrier, E., Dardis, R.: Orthopaedic conditions. In: Ernsting's Aviation and Space Medicine, pp. 580--589. CRC Press (2025).
+
+\bibitem{Dong2022} Dong, Y., Peng, R., Kang, H., Song, K., Guo, Q., Zhao, H., Zhu, M., Zhang, Y., Guan, H., Li, F.: Global incidence, prevalence, and disability of vertebral fractures: a systematic analysis of the global burden of disease study 2019. Spine J. 22(5), 857--868 (2022).
+
+\bibitem{Zhang2024} Zhang, Z.-X., Xie, L., Li, Z.: Global, regional, and national burdens of facial fractures: a systematic analysis of the global burden of disease 2019. BMC Oral Health 24(1), 282 (2024).
+
+\bibitem{Pugazhendhi2022} Pugazhendhi, A.S., Wei, F., Coathup, M.: The musculoskeletal burden: where are we now? In: Musculoskeletal Infection, pp. 1--18. Springer (2022).
+
+\bibitem{Hulsbaek2022} Hulsb{\ae}k, S., Juhl, C., R{\o}pke, A., Bandholm, T., Kristensen, M.T.: Exercise therapy is effective at improving short- and long-term mobility, activities of daily living, and balance in older patients following hip fracture: a systematic review and meta-analysis. J. Gerontol. A Biol. Sci. Med. Sci. 77(4), 861--871 (2022).
+
+\bibitem{Zhao2025} Zhao, S., Lan, Z., Lin, J., Kan, S., Jiao, Y., Chen, L., Du, Y.: Burden of vertebral fractures attributable to motor vehicle collisions in China, India, and globally, 1990--2021: findings from the Global Burden of Disease Study 2021 (2025).
+
+\bibitem{Singer2023} Singer, A., McClung, M.R., Tran, O., Morrow, C.D., Goldstein, S., Kagan, R., McDermott, M., Yehoshua, A.: Treatment rates and healthcare costs of patients with fragility fracture by site of care: a real-world data analysis. Arch. Osteoporos. 18(1), 42 (2023).
+
+\bibitem{Cormican2022} Cormican, O., Meskell, P., Dowling, M.: Psychosocial vulnerability among carers of persons living with a chronic illness: a scoping review. Int. J. Nurs. Pract. 28(6), e13024 (2022).
+
+\bibitem{Kumar2024} Kumar, T.P., Suthendran, K.: A comprehensive review of fracture detection and identification from medical images using deep learning methods. In: Proc. 3rd Int. Conf. on Applied Artificial Intelligence and Computing (ICAAIC), pp. 399--404. IEEE (2024).
+
+\bibitem{Aldhyani2024} Aldhyani, T.H.H., Alzahrani, A.K., Alshahrani, S.M.: Deep learning for bone fracture detection. Front. Med. 11, 1506686 (2024). \url{doi:10.3389/fmed.2024.1506686}
+
+\bibitem{Parvin2023} Parvin, S., Rahman, M.M.: Deep learning-based bone fracture detection using CNN and MobileNet. IEEE Access 11, 145872--145883 (2023). \url{doi:10.1109/ACCESS.2023.3248261}
+
+\bibitem{Alwzwazy2025} Alwzwazy, M.A., Al-Dahash, S.H., Al-Azawi, R.K.: FracNet: A cross-dataset evaluation framework for bone fracture recognition. Pattern Recognit. Lett. 182, 30--42 (2025). \url{doi:10.1016/j.patrec.2025.02.014}
+
+\bibitem{Mahmoud2025} Mahmoud, Y., Horvath, K., Zhou, Y.: Deep learning for predicting rehabilitation success: advancing clinical and patient-reported outcome modeling. Electronics 14(6), 1082 (2025). \url{doi:10.3390/electronics14061082}
+
+\bibitem{Kumar2020} Kumar, S., Rani, A., Gupta, N.: Bone fracture detection and classification using deep learning approach. In: Proc. Int. Conf. on Computing and Communication Technologies, pp. 112--118. IEEE (2020). \url{doi:10.1109/IC3T48202.2020.9182075}
+
+\end{thebibliography}
+\end{document}

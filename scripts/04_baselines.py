@@ -42,6 +42,51 @@ LABELS = {
 }
 
 
+def _attach_proposed(rows: dict, base, full_run: str) -> None:
+    """Add the proposed model's row and its paired test against each baseline.
+
+    McNemar is the right test here because every model is evaluated on the
+    *same* 293 images: it conditions on the discordant pairs and ignores the
+    images both models get right, which an unpaired comparison of two accuracy
+    figures cannot do.
+    """
+    full_path = RESULTS / f"run_{full_run}.json"
+    pred_path = RESULTS / f"predictions_{full_run}.npz"
+    if not (full_path.exists() and pred_path.exists()):
+        print(f"  note: {full_path.name} not found; table omits the proposed row")
+        return
+    full = load_json(full_path)
+    rows["proposed"] = {"label": "EfficientNet-GCN (proposed)", "test": full["test"]}
+    stored = np.load(pred_path)
+    proposed_pred, labels = stored["proba"].argmax(1), stored["labels"]
+    for name in list(rows):
+        if name == "proposed":
+            continue
+        path = RESULTS / f"predictions_{variant_config(base, name).run_name}.npz"
+        if not path.exists():
+            continue
+        other = np.load(path)["proba"].argmax(1)
+        result = mcnemar_test(labels, proposed_pred, other)
+        rows[name]["mcnemar_vs_proposed"] = result
+        print(f"    McNemar vs {LABELS[name]:26s} p = {result['p_value']:.4f} "
+              f"({result['a_only_correct']} / {result['b_only_correct']} discordant)")
+
+
+def _write_tables(rows: dict) -> None:
+    save_json(rows, RESULTS / "baselines.json")
+    with open(RESULTS / "table_baselines.csv", "w", encoding="utf-8") as handle:
+        handle.write("model,accuracy,macro_f1,auc,parameters_millions,mcnemar_p\n")
+        for row in rows.values():
+            t = row["test"]
+            params = t.get("parameters")
+            p = row.get("mcnemar_vs_proposed", {}).get("p_value", "")
+            handle.write(f"\"{row['label']}\",{t['accuracy']:.4f},{t['f1_macro']:.4f},"
+                         f"{t['auc_macro_ovr']:.4f},"
+                         f"{'' if params is None else f'{params/1e6:.2f}'},"
+                         f"{'' if p == '' else f'{p:.4f}'}\n")
+    print(f"\nwrote {RESULTS/'table_baselines.csv'}")
+
+
 def run_one(cfg, name: str) -> dict:
     set_seed(int(cfg.seed))
     loaders = build_loaders(cfg)
@@ -67,10 +112,33 @@ def main() -> int:
     parser.add_argument("--probe", action="store_true",
                         help="also run the augment-before-split protocol probe")
     parser.add_argument("--full-run", default="full")
+    parser.add_argument("--compare-only", action="store_true",
+                        help="skip training; rebuild the table from stored "
+                             "run_*.json and predictions_*.npz")
     args = parser.parse_args()
 
     base = load_config(args.config, args.overrides)
     rows: dict[str, dict] = {}
+
+    if args.compare_only:
+        # Assemble the table from artefacts already on disk. Used when the
+        # baselines were trained in one environment and the proposed model in
+        # another, so the paired comparison has to be recombined afterwards.
+        for name in (args.only or ORDER):
+            cfg = variant_config(base, name)
+            path = RESULTS / f"run_{cfg.run_name}.json"
+            if not path.exists():
+                print(f"  skipping {name}: {path} not found")
+                continue
+            stored = load_json(path)
+            report = stored["test"]
+            report["parameters"] = stored.get("parameters")
+            rows[name] = {"label": LABELS[name], "test": report}
+            print(f"  {LABELS[name]:26s} acc {report['accuracy']*100:.2f}%  "
+                  f"macroF1 {report['f1_macro']:.4f}")
+        _attach_proposed(rows, base, args.full_run)
+        _write_tables(rows)
+        return 0
 
     for name in (args.only or ORDER):
         if name not in BASELINES:
@@ -83,23 +151,7 @@ def main() -> int:
               f"macroF1 {report['f1_macro']:.4f}  AUC {report['auc_macro_ovr']:.4f}  "
               f"params {report['parameters']/1e6:.2f}M", flush=True)
 
-    # -- the proposed model, for the same table -----------------------------------
-    full_path = RESULTS / f"run_{args.full_run}.json"
-    if full_path.exists():
-        full = load_json(full_path)
-        rows["proposed"] = {"label": "EfficientNet-GCN (proposed)", "test": full["test"]}
-        # Paired significance against every baseline on the identical test partition.
-        proposed_pred = np.load(
-            RESULTS / f"predictions_{args.full_run}.npz")["proba"].argmax(1)
-        labels = np.load(RESULTS / f"predictions_{args.full_run}.npz")["labels"]
-        for name in rows:
-            if name == "proposed":
-                continue
-            path = RESULTS / f"predictions_{variant_config(base, name).run_name}.npz"
-            if not path.exists():
-                continue
-            other = np.load(path)["proba"].argmax(1)
-            rows[name]["mcnemar_vs_proposed"] = mcnemar_test(labels, proposed_pred, other)
+    _attach_proposed(rows, base, args.full_run)
 
     if args.probe:
         print("\n=== protocol probe: augment BEFORE split ===", flush=True)
@@ -117,18 +169,7 @@ def main() -> int:
         print(f"    acc {report['accuracy']*100:.2f}%  "
               f"macroF1 {report['f1_macro']:.4f}", flush=True)
 
-    save_json(rows, RESULTS / "baselines.json")
-    with open(RESULTS / "table_baselines.csv", "w", encoding="utf-8") as handle:
-        handle.write("model,accuracy,macro_f1,auc,parameters_millions,mcnemar_p\n")
-        for key, row in rows.items():
-            t = row["test"]
-            params = t.get("parameters")
-            p = row.get("mcnemar_vs_proposed", {}).get("p_value", "")
-            handle.write(f"\"{row['label']}\",{t['accuracy']:.4f},{t['f1_macro']:.4f},"
-                         f"{t['auc_macro_ovr']:.4f},"
-                         f"{'' if params is None else f'{params/1e6:.2f}'},"
-                         f"{'' if p == '' else f'{p:.4f}'}\n")
-    print(f"\nwrote {RESULTS/'table_baselines.csv'}")
+    _write_tables(rows)
     return 0
 
 

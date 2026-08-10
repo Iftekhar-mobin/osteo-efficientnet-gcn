@@ -1128,9 +1128,18 @@ prediction sits within a fifth of a grade of the truth. Top-2 accuracy is
 97.61\%: in all but seven of the 293 images the correct grade is among the two
 highest-ranked classes, which is what the gap between the macro AUC and the
 arg-max accuracy predicts. The expected calibration error is 0.0717 over fifteen
-equal-width confidence bins, so the model is mildly overconfident; the
-reliability diagram is reported in the supplementary figures rather than the
-main text.
+equal-width confidence bins. Its sign runs opposite to the usual finding for a
+deep classifier: mean confidence is 0.8317 against an accuracy of 0.8771, so the
+model is \emph{under}-confident on average. This is the expected consequence of
+three components of the design that each pull predicted probabilities toward the
+interior of the simplex --- the label smoothing of Eq.~\eqref{eq:loss}, the
+probability averaging of the fusion head, and the flip-averaged test-time
+augmentation. The miscalibration is concentrated at the low-confidence end: the
+29 images predicted with confidence below 0.53 are 72\% correct, so the model
+hedges considerably more than it needs to there. The two highest-confidence
+bins, which between them hold 194 of the 293 test images, are both accurate and
+well calibrated (98\% correct at a mean confidence of 0.92), which is the
+property that matters if the model is used to triage.
 
 \begin{table}[!t]
 \centering
@@ -1596,17 +1605,24 @@ Section~\ref{sec:auxensemble} moves test accuracy by at most 1.4 points across
 the whole range of $w$, so the fusion weight is not where the residual gap
 lives.
 
-The calibration measurement is more informative. The expected calibration error
-is 0.0717, with mean confidence exceeding observed accuracy, so the model is
-mildly overconfident --- and the direction of its errors is systematic rather
-than symmetric: Osteoporosis recall (0.8151) is the lowest in
+The calibration measurement is more informative, and it points away from the
+obvious remedy. The expected calibration error is 0.0717 but its sign is
+inverted relative to the usual deep-classifier finding: mean confidence (0.8317)
+sits \emph{below} accuracy (0.8771). Temperature scaling, the standard
+correction, addresses overconfidence and would therefore be the wrong
+instrument here.
+
+What is systematic is not the magnitude of the confidences but the direction of
+the errors. Osteoporosis recall (0.8151) is the lowest entry in
 Table~\ref{tab:per_class_performance} while Osteopenia precision (0.7429) is
-also the lowest, which is the signature of a decision boundary displaced toward
-the intermediate grade. With a top-2 accuracy of 97.61\%, the ranking is close
-to exhausted as a source of further gains; what remains is the mapping from
-probabilities to a decision. Per-class threshold adjustment or a
-temperature-scaled, cost-sensitive rule fitted on the validation partition is
-therefore the cheapest remaining improvement, and it targets exactly the
+also the lowest, and the largest single off-diagonal cell is Osteoporosis read
+as Osteopenia. That is the signature of a decision boundary displaced toward the
+intermediate grade, and it is a class-asymmetry problem rather than a confidence
+problem. With top-2 accuracy at 97.61\%, the ranking is close to exhausted as a
+source of further gains; what remains lies in the mapping from probabilities to
+a decision. A per-class threshold or an explicitly cost-sensitive rule fitted on
+the validation partition, penalising under-calls more heavily than over-calls,
+is therefore the cheapest remaining improvement, and it targets exactly the
 under-calling behaviour that matters in the screening role of
 Section~\ref{sec:discussion}. Neither has been implemented here.
 

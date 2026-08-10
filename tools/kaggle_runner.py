@@ -133,17 +133,30 @@ with tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode="r:gz") as
     tar.extractall(REPO)
 print("unpacked:", sorted(p.name for p in REPO.iterdir()), flush=True)
 
-# 2. carry forward artefacts from earlier stages (attached kernel outputs)
-for src in glob.glob("/kaggle/input/*/results") + glob.glob("/kaggle/input/*/checkpoints"):
-    dest = REPO / Path(src).name
-    dest.mkdir(parents=True, exist_ok=True)
-    for item in Path(src).rglob("*"):
-        if item.is_file():
-            target = dest / item.relative_to(src)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if not target.exists():
-                shutil.copy2(item, target)
-    print("carried forward:", src, "->", dest, flush=True)
+# 2. carry forward artefacts from earlier stages (attached kernel outputs).
+# Kaggle nests attached inputs (datasets under /kaggle/input/datasets/<owner>/...,
+# notebook outputs elsewhere), so search rather than assume a fixed depth.
+carried = []
+for wanted in ("results", "checkpoints"):
+    for src in sorted(Path("/kaggle/input").rglob(wanted)):
+        if not src.is_dir() or "OS Collected Data" in str(src):
+            continue
+        dest = REPO / wanted
+        dest.mkdir(parents=True, exist_ok=True)
+        for item in src.rglob("*"):
+            if item.is_file():
+                target = dest / item.relative_to(src)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if not target.exists():
+                    shutil.copy2(item, target)
+        carried.append(str(src))
+print("carried forward:", carried or "nothing", flush=True)
+if not carried and NEEDS_PRIOR:
+    print("input tree:", flush=True)
+    for p in sorted(Path("/kaggle/input").glob("*/*/*"))[:40]:
+        print("   ", p, flush=True)
+    raise SystemExit("this stage needs an earlier stage's output but none was "
+                     "attached -- check the notebook's Input panel")
 
 # 3. dependencies missing from the Kaggle image
 for pkg in EXTRA_PIP:
@@ -197,6 +210,7 @@ def build_script(stage: str) -> str:
         f"STAGE = {stage!r}\n"
         f"STEPS = {json.dumps(spec['steps'])}\n"
         f"EXTRA_PIP = {json.dumps(['lime'])}\n"
+        f"NEEDS_PRIOR = {bool(spec['needs'])}\n"
     )
     return header + ENTRYPOINT
 

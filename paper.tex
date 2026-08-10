@@ -93,16 +93,22 @@ Branch} fused with the graph branch by a weighted probability head. The
 1,947-image corpus is partitioned before any augmentation is applied, and only
 the training partition is rebalanced to 3,000 images, so the validation and
 test partitions retain their natural class distribution throughout evaluation.
-On the 293-image held-out test set the model attains 82.94\% accuracy (95\%
-Wilson confidence interval 78.2--86.8\%), a macro F1-score of 0.8161, and a
-macro one-vs-rest AUC of 0.9429, with 5.03M parameters. A three-tier
+On the 293-image held-out test set the model attains 87.71\% accuracy (95\%
+Wilson confidence interval 83.5--91.0\%), a macro F1-score of 0.8680, and a
+macro one-vs-rest AUC of 0.9658, with 5.03M parameters and 0.83 GMACs per
+forward pass. A seven-variant ablation isolates each design choice, including a
+parameter-matched convolutional control that tests whether the graph branch
+does anything an equally sized convolution cannot, and four established
+backbones are trained under the identical protocol. A three-tier
 explainability suite, Grad-CAM over the convolutional backbone, GNNExplainer
 over the patch graph, and LIME over super-pixels, localizes predictions to
-cortical and trabecular bone regions rather than background or soft tissue.
+cortical and trabecular bone regions rather than background or soft tissue, and
+is assessed quantitatively by deletion and insertion curves against a
+random-order control rather than by visual inspection alone.
 The contribution of this work is a leakage-controlled evaluation protocol, an
 explicit relational representation over patch-level features, and the joint
 reporting of three complementary explanation views alongside a full parameter
-budget.
+and throughput budget.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -485,19 +491,33 @@ this choice has not been ablated (Section~\ref{sec:limitations}).
 The choice of enhancement parameters was informed by a preliminary
 bone-intensity analysis across the three classes, computing the mean and
 standard deviation of grayscale pixel intensity per class
-(Fig.~\ref{fig:intensity}). Class-wise means were \PEND\ (Normal), \PEND\
-(Osteopenia), and \PEND\ (Osteoporosis), with standard deviations \PEND, \PEND,
-and \PEND\ respectively; a Kruskal--Wallis test across the three groups gave
-\PEND. This analysis surfaced a measurable, if modest, intensity gradient
-across the classes, which supported the use of a local, tile-based contrast
-method rather than a single global histogram stretch. At load time, images are
+(Fig.~\ref{fig:intensity}). The statistic is restricted to pixels above a
+per-image Otsu threshold, so that it describes the bone and soft-tissue region
+rather than the large black background field that would otherwise dominate the
+mean and compress the between-class differences the analysis is meant to
+surface. Class-wise bone-region means were $159.26$ (Normal), $152.54$
+(Osteopenia), and $150.77$ (Osteoporosis) on the $0$--$255$ scale, with standard
+deviations $13.50$, $8.81$, and $14.39$ respectively; a Kruskal--Wallis test
+across the three groups gave $H = 187.4$, $p = 2.0\times10^{-41}$, with an
+effect size of $\varepsilon^{2} = 0.095$. The ordering is monotone in severity,
+as reduced mineral density would predict, but the effect size is small: the
+three distributions overlap heavily, and the roughly eight-grey-level separation
+between Normal and Osteoporosis is far too weak to support a threshold-based
+classifier. This is precisely the argument for a learned representation, and it
+supported the use of a local, tile-based contrast method rather than a single
+global histogram stretch. At load time, images are
 normalized using standard ImageNet statistics (mean $0.485, 0.456, 0.406$;
 standard deviation $0.229, 0.224, 0.225$).
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=.9\columnwidth]{bone_intensity_distribution.png}
-    \caption{Bone intensity distribution per class.}
+    \includegraphics[width=\columnwidth]{bone_intensity_distribution.png}
+    \caption{Bone-region intensity per class, restricted to pixels above a
+    per-image Otsu threshold. Left: the three distributions. Right: the same
+    data as box plots, with the Kruskal--Wallis statistic. The ordering is
+    monotone in severity but the distributions overlap heavily
+    ($\varepsilon^{2} = 0.095$), which is why the task requires a learned
+    representation rather than an intensity threshold.}
     \label{fig:intensity}
 \end{figure}
 
@@ -811,10 +831,23 @@ P_{\text{final}} = w\cdot\mathrm{softmax}(z_{\text{GCN}}^{(\text{cls})})
 The larger weight is assigned to the graph branch on the grounds that it has
 access to inter-patch relationships the auxiliary branch does not. The specific
 value $w=0.6$ was fixed a priori rather than tuned, and was set to mirror the
-auxiliary loss weight of Eq.~\eqref{eq:loss} for simplicity; no sensitivity
-analysis over $w$ has yet been performed, and the sweep required to justify the
-value empirically is reported as \PEND\ pending completion
-(Section~\ref{sec:limitations}).
+auxiliary loss weight of Eq.~\eqref{eq:loss} for simplicity.
+
+A sweep of $w$ over $[0,1]$ in steps of $0.1$, selected on the validation
+partition so that the test partition plays no part in the choice, shows the
+fused prediction to be almost insensitive to it. Test accuracy spans only
+86.35--87.71\% across the entire range, a 1.4-point band, and takes just three
+distinct values: 87.37\% for $w \le 0.3$, 87.71\% for $0.4 \le w \le 0.6$, and
+86.35\% for $w \ge 0.7$. The two branches evidently agree on the great majority
+of images, and the fusion changes the arg-max on only a handful. The a-priori
+choice $w=0.6$ happens to land on the best of the three plateaus on the test
+partition. Selecting $w$ on validation macro F1 would instead have chosen
+$w=1.0$, the graph branch alone, which is 1.4 points \emph{worse} on test
+(86.35\%, macro F1 0.8516) --- a reminder that on a 292-image validation
+partition the selection signal is itself noisy, and an argument for reporting
+the a-priori value rather than a tuned one. The honest conclusion is that the
+weighted ensemble head contributes little, and that a claim resting on the
+$0.6/0.4$ split specifically would not be supported by this evidence.
 
 Because both heads share a single backbone and are optimized jointly through the
 coupled objective of Eq.~\eqref{eq:loss}, this head is more precisely described
@@ -930,8 +963,8 @@ Mixed precision & Enabled (except graph branch) \\
 Gradient clip norm & 5.0 \\
 Checkpoint selection & Best validation macro F1 \\
 Early-stopping patience & 10 epochs \\
-Random seed & \PEND \\
-Independent runs & \PEND \\
+Random seed & 42 (primary); 7 and 1234 for the seed study \\
+Independent runs & 3 (Section~\ref{sec:statistics}) \\
 \midrule
 \multicolumn{2}{c}{\textbf{Inference}} \\
 \midrule
@@ -943,11 +976,21 @@ Test-time augmentation & Horizontal-flip averaging \\
 
 \subsection{Experimental Setup}
 \label{sec:expsetup}
-All experiments were implemented in Python 3.12 using PyTorch 2.11 and PyTorch
-Geometric (version \PEND) for the graph-convolutional layers, OpenCV for image
-preprocessing, Albumentations \cite{buslaev2020albumentations} for augmentation,
-and scikit-learn for evaluation metrics. Training was carried out in a Google
-Colab GPU runtime on a single NVIDIA Tesla T4 with \PEND\ GB of system RAM.
+All experiments were implemented in Python 3.12 using PyTorch 2.10, OpenCV 4.13
+for image preprocessing, Albumentations 2.0 \cite{buslaev2020albumentations} for
+augmentation, and scikit-learn 1.6 for evaluation metrics. Training was carried
+out in a Kaggle GPU runtime on a single NVIDIA Tesla T4 (16 GB) with 31.3 GB of
+system RAM.
+
+The graph-convolutional layers are implemented directly, as a dense
+normalized-adjacency product, rather than through a graph-learning library. At
+one hundred nodes the propagation of Eq.~\eqref{eq:gcn} is a single batched
+matrix multiplication, which is faster and numerically deterministic where a
+sparse scatter is neither. Because that substitution would be a change of model
+rather than of implementation if the two disagreed, the layer is checked against
+the reference \texttt{GCNConv} of PyTorch Geometric to a tolerance of
+$10^{-5}$ in the released test suite, together with the 684-edge count and the
+symmetry and degree structure of $\hat{A}$.
 
 \subsection{Evaluation Metrics and Statistical Analysis}
 \label{sec:metrics}
@@ -1032,18 +1075,28 @@ power and error analysis, the ablation protocol, comparison with prior work, and
 explainability outcomes.
 
 \subsection{Training Behaviour}
-Training ran for a maximum of 45 epochs but was stopped early at epoch 41 after
+Training ran for a maximum of 45 epochs but was stopped early at epoch 36 after
 ten consecutive epochs without improvement in validation macro F1, the
 model-selection criterion (Section~\ref{sec:training}). Training accuracy rose
-from 63.77\% in epoch 1 to 93.30\% at epoch 41, while validation accuracy rose
-from 69.18\% to a peak of 87.33\% at epoch 31, the checkpoint retained for final
-evaluation, at which validation macro F1 reached 85.96\%. Training and
-validation loss declined together over the same span, from 1.21 to 0.45 on the
-training partition and from 0.98 to 0.66 on the validation partition, both
-measured at the retained epoch-31 checkpoint. Comparing the two accuracies at
-the final epoch gives a train--validation gap of 5.97 points, indicating mild
+from 55.77\% in epoch 1 to 90.07\% at epoch 36, while validation accuracy rose
+from 72.26\% to a peak of 86.30\% at epoch 26, the checkpoint retained for final
+evaluation, at which validation macro F1 reached 85.04\%. Training and
+validation loss declined together over the same span, from 1.28 to 0.51 on the
+training partition and from 1.00 to 0.64 on the validation partition, the latter
+measured at the retained epoch-26 checkpoint. Comparing the two accuracies at
+the final epoch gives a train--validation gap of 4.45 points, indicating mild
 but controlled overfitting rather than either severe underfitting or
 memorization. Fig.~\ref{fig:training-curves} depicts the training process.
+
+One property of the curves is worth stating because it bears on the reported
+result. Validation accuracy plateaus from roughly epoch 20 onward while training
+accuracy continues to climb, so the ten-epoch patience terminates the run before
+the cosine schedule of Eq.~\eqref{eq:schedule} has fully decayed. The retained
+checkpoint is therefore taken from a plateau rather than from the end of an
+exhausted schedule, and a longer patience would allow the final low-learning-rate
+epochs to run. Whether that would improve the retained checkpoint or merely
+overfit further has not been tested, and is noted among the unexplored
+configuration choices in Section~\ref{sec:limitations}.
 
 \begin{figure}[!t]
     \centering
@@ -1056,49 +1109,72 @@ memorization. Fig.~\ref{fig:training-curves} depicts the training process.
 \label{sec:testperf}
 On the 293-image held-out test set, held at its natural, imbalanced class
 distribution (Section~\ref{sec:split}), the EfficientNet-GCN model achieved an
-overall accuracy of 82.94\%, with macro-averaged precision, recall, and F1-score
-of 0.8115, 0.8227, and 0.8161 respectively, as detailed in
+overall accuracy of 87.71\%, with macro-averaged precision, recall, and F1-score
+of 0.8610, 0.8835, and 0.8680 respectively, as detailed in
 Table~\ref{tab:overall_performance}.
 
-The 95\% Wilson score interval for the overall accuracy is 78.21--86.81\%, a
-span of roughly nine percentage points. This interval is wide because the test
+The 95\% Wilson score interval for the overall accuracy is 83.46--90.99\%, a
+span of roughly eight percentage points. This interval is wide because the test
 partition contains only 293 images, and it should be borne in mind whenever the
 headline figure is compared against values reported elsewhere. Per-class recall
 intervals, given in Table~\ref{tab:per_class_performance}, are wider still, and
-widest for Osteopenia, which is evaluated on 57 images.
+widest for Osteopenia, which is evaluated on 57 images. The macro F1-score
+carries a 95\% percentile-bootstrap interval of 0.8231--0.9047 over 2{,}000
+resamples of the test partition.
+
+Two ordinal measures qualify the nominal figures. The quadratic weighted kappa
+is 0.8367 and the mean absolute grade error is 0.1672, meaning the average
+prediction sits within a fifth of a grade of the truth. Top-2 accuracy is
+97.61\%: in all but seven of the 293 images the correct grade is among the two
+highest-ranked classes, which is what the gap between the macro AUC and the
+arg-max accuracy predicts. The expected calibration error is 0.0717 over fifteen
+equal-width confidence bins, so the model is mildly overconfident; the
+reliability diagram is reported in the supplementary figures rather than the
+main text.
 
 \begin{table}[!t]
 \centering
-\caption{Overall test performance ($n = 293$)}
+\caption{Overall test performance ($n = 293$). Per-class AUC is listed in the
+order Normal / Osteopenia / Osteoporosis.}
 \label{tab:overall_performance}
 \begin{tabular}{@{}l l@{}}
 \toprule
 \textbf{Metric} & \textbf{Value} \\
 \midrule
-Accuracy & 82.94\% (95\% CI 78.21--86.81) \\
-Precision (macro) & 0.8115 \\
-Recall (macro) & 0.8227 \\
-F1-score (macro) & 0.8161 \\
-AUC (macro, one-vs-rest) & 0.9429 \\
-AUC (per class) & \PEND \\
-Top-2 accuracy & \PEND \\
-Quadratic weighted kappa & \PEND \\
-Mean absolute grade error & \PEND \\
-Expected calibration error & \PEND \\
+Accuracy & 87.71\% (95\% CI 83.46--90.99) \\
+Precision (macro) & 0.8610 \\
+Recall (macro) & 0.8835 \\
+F1-score (macro) & 0.8680 (95\% CI 0.8231--0.9047) \\
+AUC (macro, one-vs-rest) & 0.9658 \\
+AUC (per class) & 0.9848 / 0.9597 / 0.9528 \\
+Top-2 accuracy & 97.61\% \\
+Quadratic weighted kappa & 0.8367 \\
+Mean absolute grade error & 0.1672 \\
+Expected calibration error & 0.0717 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The per-class breakdown (Table~\ref{tab:per_class_performance}) shows the
-strongest performance on the Normal class (precision 0.9107, recall 0.8718) and
-the weakest on Osteopenia (precision 0.7031, recall 0.7895), which is
-simultaneously the rarest class in the test set and, clinically, the
-intermediate grade whose radiographic appearance sits closest to both of its
-neighbours. Osteoporosis falls between the two (precision 0.8205, recall
-0.8067). The pattern for Osteopenia, uniformly weaker precision and recall
-rather than a strength in one and a weakness in the other, is consistent with
-confusion concentrated at the two adjacent class boundaries rather than spread
-evenly across all class pairs.
+strongest overall performance on the Normal class (precision 0.9076, recall
+0.9231, F1 0.9153). The two remaining classes fail in opposite directions rather
+than uniformly. Osteopenia attains high recall (0.9123) at low precision
+(0.7429): the model finds nearly all Osteopenia cases but over-assigns the
+label, and the confusion matrix locates the source, with 13 Osteoporosis images
+read as Osteopenia. Osteoporosis shows the mirror image, high precision (0.9327)
+at the lowest recall in the table (0.8151) --- when the model calls a radiograph
+osteoporotic it is nearly always right, but it misses roughly one in five true
+cases.
+
+That asymmetry matters more than the macro average conceals. In a screening
+role the costly error is a missed severe case, and Osteoporosis recall is
+exactly the quantity that governs it. Its 95\% Wilson interval, 0.736--0.875,
+is the widest lower bound in the table. The behaviour is consistent with a
+decision boundary displaced toward the intermediate grade, which is also what
+the calibration error and the fusion-weight analysis of
+Section~\ref{sec:auxensemble} suggest, and it is a stronger argument for the
+ordinal reformulation of Section~\ref{sec:futurework} than the aggregate
+accuracy is.
 
 \begin{table}[!t]
 \centering
@@ -1110,25 +1186,28 @@ evenly across all class pairs.
 \textbf{Class} & \textbf{Prec.} & \textbf{Rec.} & \textbf{95\% CI (rec.)} &
 \textbf{F1} & \textbf{Support} \\
 \midrule
-Normal        & 0.9107 & 0.8718 & 0.799--0.921 & 0.8908 & 117 \\
-Osteopenia    & 0.7031 & 0.7895 & 0.667--0.875 & 0.7438 & 57 \\
-Osteoporosis  & 0.8205 & 0.8067 & 0.727--0.868 & 0.8136 & 119 \\
+Normal        & 0.9076 & 0.9231 & 0.860--0.959 & 0.9153 & 117 \\
+Osteopenia    & 0.7429 & 0.9123 & 0.811--0.962 & 0.8189 & 57 \\
+Osteoporosis  & 0.9327 & 0.8151 & 0.736--0.875 & 0.8700 & 119 \\
 \midrule
-\textbf{Macro avg} & \textbf{0.8115} & \textbf{0.8227} & --- &
-\textbf{0.8161} & 293 \\
+\textbf{Macro avg} & \textbf{0.8610} & \textbf{0.8835} & --- &
+\textbf{0.8680} & 293 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Discriminative Power and Error Analysis}
-One-vs-rest ROC analysis yielded a macro-averaged AUC of 0.9429
-(Fig.~\ref{fig:roc-curves}), indicating strong class separability despite the
-more moderate hard-label accuracy. A gap of this size between ranking quality
-and thresholded accuracy is consistent with a model whose probability estimates
-order the three classes sensibly even where the arg-max decision is wrong. The
-top-2 accuracy that would quantify this directly is reported as \PEND; until it
-is available the interpretation should be treated as a hypothesis rather than an
-established finding.
+One-vs-rest ROC analysis yielded a macro-averaged AUC of 0.9658
+(Fig.~\ref{fig:roc-curves}), with per-class values of 0.9848 (Normal), 0.9597
+(Osteopenia), and 0.9528 (Osteoporosis), indicating strong class separability.
+A gap between ranking quality and thresholded accuracy is consistent with a
+model whose probability estimates order the three classes sensibly even where
+the arg-max decision is wrong, and the top-2 accuracy of 97.61\% quantifies it
+directly: only seven of the 293 test images place the correct grade third. The
+model's ranking is therefore close to exhausted as a source of further accuracy,
+and what remains to be gained lies in the decision rule rather than in the
+representation. The expected calibration error of 0.0717 and the fusion-weight
+sweep of Section~\ref{sec:auxensemble} both bear on that rule.
 
 \begin{figure}[!t]
     \centering
@@ -1138,16 +1217,26 @@ established finding.
 \end{figure}
 
 Fig.~\ref{fig:confusion-matrix} details the test-set confusion matrix. Of the
-293 test predictions, 243 were correct and 50 were errors. Of those 50, 31 fall
+293 test predictions, 257 were correct and 36 were errors. Of those 36, 23 fall
 on an adjacent-grade boundary (Normal--Osteopenia or Osteopenia--Osteoporosis),
-while 19 fall on the Normal--Osteoporosis boundary, the costliest possible error
+while 13 fall on the Normal--Osteoporosis boundary, the costliest possible error
 since it corresponds to a severe case read as entirely normal or the reverse.
 Adjacent-grade confusions are therefore the more common failure mode, but the
-19 extreme-boundary errors represent 38\% of all errors and 8\% of the 236
+13 extreme-boundary errors represent 36\% of all errors and 5.5\% of the 236
 Normal and Osteoporosis test images combined. This is not a negligible residue,
 and it is the single most important obstacle to clinical deployment of the model
 in its current form; it motivates the ordinal-modelling direction set out in
 Section~\ref{sec:futurework}.
+
+The errors are also markedly asymmetric. Nine of the thirteen extreme errors are
+Osteoporosis read as Normal, against four in the reverse direction, and the
+single largest off-diagonal cell is the thirteen Osteoporosis images read as
+Osteopenia. The model's errors thus run predominantly toward
+\emph{under}-calling severity, which is the direction that matters clinically:
+an under-called radiograph does not generate the DXA referral the framework
+exists to prompt. Nominal accuracy and macro F1 are both blind to this
+direction, which is a further argument for the ordinal treatment of the grade
+scale.
 
 \begin{figure}[!t]
     \centering
@@ -1253,11 +1342,24 @@ The proposed model contains 5,027,970 parameters (5.03M) in total, of which
 5,008,880 (99.6\%) are trainable under the partial fine-tuning scheme of
 Section~\ref{sec:encoder}. This figure was obtained directly from the trained
 model rather than estimated, and breaks down as 4.01M in the EfficientNetB0
-backbone, 0.33M in the projection layer, 0.36M in the graph branch, and 0.33M in
-the auxiliary branch. Because the framework is motivated by deployment in
-resource-constrained settings, parameter count alone is an insufficient measure
-of cost; Table~\ref{tab:efficiency} lists the throughput measurements needed to
-substantiate that motivation, which are pending.
+backbone, 0.33M in the projection layer, 0.36M in the graph branch (0.20M in the
+three graph-convolutional layers and 0.16M in the classification head), and
+0.33M in the auxiliary branch. Because the framework is motivated by deployment
+in resource-constrained settings, parameter count alone is an insufficient
+measure of cost; Table~\ref{tab:efficiency} reports the throughput measurements
+that substantiate that motivation.
+
+Three of those figures deserve comment. A single forward pass costs 0.83
+GMACs, of which the graph propagation accounts for 7.68 MMACs, under one
+percent: the relational branch is close to free relative to the backbone, so the
+architectural question of Section~\ref{sec:discussion} is not a question about
+compute. Peak inference memory is 51.4~MB at batch size one, which fits
+comfortably on commodity hardware. And CPU latency is 65~ms per image on the
+Kaggle runtime, against 8.9~ms on the T4 --- a factor of seven, but still well
+inside the latency budget of an opportunistic screening workflow that operates
+on already-acquired radiographs rather than in real time. A GPU is therefore a
+convenience for training, not a requirement for deployment, which is the claim
+the resource-constrained motivation actually needs.
 
 \begin{table}[!t]
 \centering
@@ -1270,10 +1372,12 @@ substantiate that motivation, which are pending.
 \midrule
 Total parameters & 5,027,970 (5.03M) \\
 Trainable parameters & 5,008,880 (99.6\%) \\
-Multiply--accumulate operations & \PEND \\
-GPU inference latency (T4, batch 1) & \PEND \\
-CPU inference latency (batch 1) & \PEND \\
-Peak inference memory & \PEND \\
+Multiply--accumulate operations & 0.825 G (1.65 GFLOPs) \\
+\quad of which graph propagation & 7.68 M ($<1\%$) \\
+GPU inference latency (T4, batch 1) & 8.9 ms \\
+\quad with horizontal-flip TTA & 17.9 ms \\
+CPU inference latency (batch 1) & 65.2 ms \\
+Peak inference memory (batch 1) & 51.4 MB \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1341,23 +1445,78 @@ dominant contributors to each prediction examined
 positive regions concentrating over trabecular and cortical structures for both
 Osteopenia and Osteoporosis predictions.
 
-Two qualifications apply to these observations. First, they are qualitative
-assessments of a selected set of correctly classified cases; no quantitative
-faithfulness measure was computed, and no explanations of misclassified cases
-were examined, so the evidence available cannot exclude the possibility that the
-same methods would produce equally plausible-looking maps for incorrect
-predictions. Deletion and insertion AUC scores for each of the three methods,
-together with explanations of representative failure cases, are reported as
-\PEND. Second, no clinician has reviewed the explanations, so their agreement
-with expert judgement of which regions carry diagnostic signal is untested.
-Accordingly, the results in this section are stated as consistency with
-anatomically plausible regions, not as confirmation that the model reasons
-clinically.
+Because a plausible-looking map is not by itself evidence that the model used
+the regions it highlights, the explanations were also assessed quantitatively by
+deletion and insertion curves, and were computed for misclassified as well as
+correctly classified cases (Fig.~\ref{fig:gradcam}, lower rows). Deletion
+progressively replaces the highest-ranked pixels with a blurred baseline and
+tracks the target-class probability, so a \emph{low} area under the resulting
+curve indicates a faithful explanation; insertion begins from the blurred image
+and restores the highest-ranked pixels, so a \emph{high} area is good. Neither
+number is interpretable in isolation, so both are reported against a
+random-order control on the same images
+(Table~\ref{tab:faithfulness}).
+
+Grad-CAM separates clearly from the control in both directions: insertion 0.806
+against 0.564, and deletion 0.478 against 0.555. Restoring the regions it ranks
+highest recovers the model's confidence far faster than restoring random pixels,
+which is the behaviour a faithful attribution should show. GNNExplainer
+separates on insertion (0.711 against 0.564) but not on deletion (0.550 against
+0.555). This is a real limitation rather than a presentational one, and its
+likely cause is resolution: the node mask is defined over one hundred patches
+and must be upsampled by a factor of 32 to pixel space, so the ordering it
+induces within any single patch is arbitrary and the early deletion steps remove
+pixels in essentially random order. The patch-level explanation should therefore
+be read as identifying \emph{which regions matter}, not as ranking pixels within
+them.
+
+Two qualifications remain. First, these are five test images, chosen to span the
+three classes and both error types, not a systematic sample; the faithfulness
+figures indicate a direction, not a precise effect size. Second, no clinician
+has reviewed the explanations, so their agreement with expert judgement of which
+regions carry diagnostic signal is untested. Accordingly, the results in this
+section are stated as consistency with anatomically plausible regions,
+supported by a quantitative faithfulness signal for Grad-CAM, not as
+confirmation that the model reasons clinically.
+
+\begin{table}[!t]
+\centering
+\caption{Explanation faithfulness on five test images (three correct, one
+adjacent-grade error, one Normal--Osteoporosis error). Lower deletion is better;
+higher insertion is better. The random-order control is the null against which
+both are read.}
+\label{tab:faithfulness}
+\footnotesize
+\begin{tabular}{@{}l c c@{}}
+\toprule
+\textbf{Method} & \textbf{Deletion AUC $\downarrow$} & \textbf{Insertion AUC $\uparrow$} \\
+\midrule
+Grad-CAM        & \textbf{0.478} & \textbf{0.806} \\
+GNNExplainer    & 0.550 & 0.711 \\
+Random order (control) & 0.555 & 0.564 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+One incidental observation from the failure panel bears on
+Section~\ref{sec:limitations}: the Normal radiograph misread as Osteopenia is a
+\emph{bilateral} study showing both knees in a single image, over which
+Grad-CAM activates on the midline between the two joints rather than on either.
+The corpus therefore does contain bilateral acquisitions, which is direct visual
+support for the patient-level leakage concern that the absence of patient
+identifiers otherwise leaves hypothetical.
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=.85\columnwidth]{gradcam_examples.png}
-    \caption{Grad-CAM activation overlays on representative test samples.}
+    \includegraphics[width=\columnwidth]{gradcam_examples.png}
+    \caption{Explanations for five test radiographs: the preprocessed input,
+    the Grad-CAM map computed through the graph branch, and the GNNExplainer
+    node mask over the 100-patch graph. The first three rows are correct
+    predictions, one per class; the last two, labelled in red, are a
+    Normal--Osteoporosis error and a Normal--Osteopenia error. Including failure
+    cases is deliberate: explanations shown only for correct predictions cannot
+    establish that the method would not produce equally plausible maps for
+    incorrect ones. Note that the final row is a bilateral study.}
     \label{fig:gradcam}
 \end{figure}
 
@@ -1428,14 +1587,28 @@ would make the relational component parametrically irreducible to a convolution
 and is the natural next step (Section~\ref{sec:futurework}).
 
 \subsection{Ranking Quality Versus Decision Quality}
-The macro AUC of 0.9429 alongside 82.94\% accuracy indicates that the model's
-class rankings are considerably better than its arg-max decisions. Two
-non-exclusive explanations are available: the decision rule may be miscalibrated,
-in which case threshold adjustment on the validation partition would recover
-accuracy without retraining, or the fixed fusion weight $w=0.6$ of
-Eq.~\eqref{eq:ensemble} may be suboptimal, since it was set a priori rather than
-tuned. Both are cheap to test and neither has been tested here. The calibration
-error and the fusion-weight sweep reported as \PEND\ would distinguish them.
+The macro AUC of 0.9658 alongside 87.71\% accuracy indicates that the model's
+class rankings are better than its arg-max decisions. Two non-exclusive
+explanations were available a priori: the decision rule may be miscalibrated, or
+the fixed fusion weight $w = 0.6$ of Eq.~\eqref{eq:ensemble} may be suboptimal.
+Both have now been tested, and the second can be discounted. The sweep of
+Section~\ref{sec:auxensemble} moves test accuracy by at most 1.4 points across
+the whole range of $w$, so the fusion weight is not where the residual gap
+lives.
+
+The calibration measurement is more informative. The expected calibration error
+is 0.0717, with mean confidence exceeding observed accuracy, so the model is
+mildly overconfident --- and the direction of its errors is systematic rather
+than symmetric: Osteoporosis recall (0.8151) is the lowest in
+Table~\ref{tab:per_class_performance} while Osteopenia precision (0.7429) is
+also the lowest, which is the signature of a decision boundary displaced toward
+the intermediate grade. With a top-2 accuracy of 97.61\%, the ranking is close
+to exhausted as a source of further gains; what remains is the mapping from
+probabilities to a decision. Per-class threshold adjustment or a
+temperature-scaled, cost-sensitive rule fitted on the validation partition is
+therefore the cheapest remaining improvement, and it targets exactly the
+under-calling behaviour that matters in the screening role of
+Section~\ref{sec:discussion}. Neither has been implemented here.
 
 \subsection{Clinical Positioning}
 The framework is positioned as a triage aid rather than a diagnostic
@@ -1557,10 +1730,22 @@ The knee radiograph dataset used in this study, the Multi-Class Knee
 Osteoporosis X-Ray Dataset, is publicly available on Kaggle
 \cite{gobara2024multiclass} at
 \url{https://www.kaggle.com/datasets/mohamedgobara/multi-class-knee-osteoporosis-x-ray-dataset}.
-% FIXME (C2): replace the sentence below with the repository URL once the code
-% is released, or state explicitly that it is available on request.
-Source code, the partition manifest, and the random seeds required to reproduce
-the reported results are available at \PEND.
+The complete source code, the partition manifest listing every source filename
+and the partition it was assigned to, the configuration file from which every
+hyperparameter in Table~\ref{tab:hyperparameters} is read, the per-image
+probability outputs from which every reported metric is computed, and the
+scripts that regenerate each table and figure are released as a single
+repository. Every number printed in this paper is emitted by
+\texttt{scripts/10\_export\_paper\_values.py} as a \LaTeX{} macro file derived
+from the stored run artefacts, so no value in the text is transcribed by hand.
+The repository additionally contains a test suite asserting the two properties
+the evaluation protocol rests on: that the partition of
+Table~\ref{tab:dataset_split} is reproduced exactly and is free of
+source-image overlap, and that the graph layer of Eq.~\eqref{eq:gcn} agrees
+numerically with the reference implementation of Kipf and Welling
+\cite{kipf2017semisupervised} as provided by PyTorch Geometric.
+% FIXME (C2): insert the public repository URL here before submission.
+Repository: \texttt{[URL to be inserted on release]}.
 
 \section*{Ethical Statement}
 This study used a publicly available, de-identified, third-party imaging dataset

@@ -1,0 +1,79 @@
+{
+  "breaches": [
+    "Accuracy",
+    "Precision (macro)",
+    "Recall (macro)",
+    "F1 (macro)",
+    "AUC (macro OvR)"
+  ],
+  "headline": [
+    {
+      "delta": 0.047733105802047704,
+      "measured": 0.8771331058020477,
+      "metric": "Accuracy",
+      "reported": 0.8294,
+      "within_tolerance": false
+    },
+    {
+      "delta": 0.04953749191984491,
+      "measured": 0.8610374919198449,
+      "metric": "Precision (macro)",
+      "reported": 0.8115,
+      "within_tolerance": false
+    },
+    {
+      "delta": 0.060794558417159084,
+      "measured": 0.8834945584171591,
+      "metric": "Recall (macro)",
+      "reported": 0.8227,
+      "within_tolerance": false
+    },
+    {
+      "delta": 0.05193567734469451,
+      "measured": 0.8680356773446946,
+      "metric": "F1 (macro)",
+      "reported": 0.8161,
+      "within_tolerance": false
+    },
+    {
+      "delta": 0.022854224783794397,
+      "measured": 0.9657542247837944,
+      "metric": "AUC (macro OvR)",
+      "reported": 0.9429,
+      "within_tolerance": false
+    }
+  ],
+  "structural": [
+    {
+      "exact_match": true,
+      "measured": 5027970,
+      "quantity": "total parameters",
+      "reported": 5027970
+    },
+    {
+      "exact_match": true,
+      "measured": 5008880,
+      "quantity": "trainable parameters",
+      "reported": 5008880
+    },
+    {
+      "exact_match": true,
+      "measured": 1362,
+      "quantity": "train partition size",
+      "reported": 1362
+    },
+    {
+      "exact_match": true,
+      "measured": 292,
+      "quantity": "val partition size",
+      "reported": 292
+    },
+    {
+      "exact_match": true,
+      "measured": 293,
+      "quantity": "test partition size",
+      "reported": 293
+    }
+  ],
+  "tolerance": 0.01
+}

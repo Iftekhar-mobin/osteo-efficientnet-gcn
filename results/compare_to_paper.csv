@@ -1,0 +1,6 @@
+metric,reported,measured,delta,within_tolerance
+"Accuracy",0.8294,0.8771,+0.0477,False
+"Precision (macro)",0.8115,0.8610,+0.0495,False
+"Recall (macro)",0.8227,0.8835,+0.0608,False
+"F1 (macro)",0.8161,0.8680,+0.0519,False
+"AUC (macro OvR)",0.9429,0.9658,+0.0229,False

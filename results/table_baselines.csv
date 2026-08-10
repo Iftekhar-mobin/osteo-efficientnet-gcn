@@ -1,2 +1,0 @@
-model,accuracy,macro_f1,auc,parameters_millions,mcnemar_p
-"EfficientNet-GCN (proposed)",0.8771,0.8680,0.9658,,

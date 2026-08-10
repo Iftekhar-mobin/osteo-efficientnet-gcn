@@ -43,3 +43,29 @@ venv/
 
 # local smoke-test subset
 data/processed_mini/
+
+# --- manuscript ---
+# The repository is released as code and results only. The LaTeX sources live
+# alongside it on the authors' machines and read their numbers from
+# results/paper_values.tex, which IS tracked.
+paper.tex
+paper.pdf
+paper_ORIGINAL_backup.tex
+ref.bib
+ref_ORIGINAL_backup.bib
+IEEEtran.cls
+IEEEtran.bst
+IEEEtran_HOWTO.pdf
+conference_101719.pdf
+templates/
+
+# Figures are canonical in figures/; scripts/09 also writes copies to the repo
+# root under the filenames paper.tex expects, and those copies are not tracked.
+/bone_intensity_distribution.png
+/gcn_confusion_matrix.png
+/gcn_roc_curves.png
+/gcn_training_curves.png
+/gnn_explainer_overlay.png
+/gradcam_examples.png
+/lime_bone_explanations.png
+/preprocessed_comparison.png

@@ -148,6 +148,49 @@ def main() -> int:
         if path.exists():
             bundle[key] = load_json(path)
 
+    if "ablation" in bundle:
+        # The manuscript names the variants by roman numeral; the artefact keys them
+        # by the config section each one changes. Map once, here, so the table cells
+        # and the prose cannot disagree about which row is which.
+        lines.append("\n% --- ablation variants ---\n")
+        for key, tag in (("full", "Full"), ("no_gcn", "NoGcn"), ("no_aux", "NoAux"),
+                         ("mean_pool", "MeanPool"), ("no_clahe", "NoClahe"),
+                         ("no_balance", "NoBalance"), ("no_tta", "NoTta"),
+                         ("conv_control", "ConvControl")):
+            row = bundle["ablation"].get(key)
+            if not row:
+                continue
+            test = row["test"]
+            lines.append(macro(f"Abl{tag}Acc", PCT(test["accuracy"])))
+            lines.append(macro(f"Abl{tag}FOne", F4(test["f1_macro"])))
+            lines.append(macro(f"Abl{tag}AUC", F4(test["auc_macro_ovr"])))
+            # Signed deltas against the full model, so the sign is never hand-typed.
+            base = bundle["ablation"]["full"]["test"]
+            lines.append(macro(f"Abl{tag}DeltaAcc",
+                               f"{100 * (test['accuracy'] - base['accuracy']):+.2f}"))
+            lines.append(macro(f"Abl{tag}DeltaFOne",
+                               f"{test['f1_macro'] - base['f1_macro']:+.4f}"))
+
+    if "baselines" in bundle:
+        lines.append("\n% --- baselines under the identical protocol ---\n")
+        for key, tag in (("effb0_gap_fc", "Effb"), ("resnet50", "Resnet"),
+                         ("densenet121", "Densenet"), ("vgg19", "Vgg"),
+                         ("proposed", "Proposed")):
+            row = bundle["baselines"].get(key)
+            if not row:
+                continue
+            test = row["test"]
+            lines.append(macro(f"Base{tag}Acc", PCT(test["accuracy"])))
+            lines.append(macro(f"Base{tag}FOne", F4(test["f1_macro"])))
+            lines.append(macro(f"Base{tag}AUC", F4(test["auc_macro_ovr"])))
+            params = test.get("parameters")
+            if params:
+                lines.append(macro(f"Base{tag}Params", f"{params / 1e6:.2f}"))
+            paired = row.get("mcnemar_vs_proposed")
+            if paired:
+                lines.append(macro(f"Base{tag}P", f"{paired['p_value']:.4f}"))
+                lines.append(macro(f"Base{tag}Disc", paired["n_discordant"]))
+
     if "multiseed" in bundle:
         lines.append("\n% --- across-seed variability ---\n")
         for metric, tag in (("accuracy", "Acc"), ("f1_macro", "FOne"),

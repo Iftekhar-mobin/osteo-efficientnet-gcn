@@ -1,0 +1,9 @@
+variant,accuracy,macro_f1,auc,delta_accuracy,delta_macro_f1
+"Full model (proposed)",0.8771,0.8680,0.9658,+0.0000,+0.0000
+"(i) w/o GCN branch",0.8840,0.8756,0.9667,+0.0068,+0.0075
+"(ii) w/o auxiliary branch",0.8635,0.8516,0.9657,-0.0137,-0.0165
+"(iii) w/o dual mean-max pooling",0.8498,0.8358,0.9627,-0.0273,-0.0322
+"(iv) w/o CLAHE preprocessing",0.8601,0.8451,0.9589,-0.0171,-0.0229
+"(v) w/o class-balancing augmentation",0.8805,0.8753,0.9615,+0.0034,+0.0072
+"(vi) w/o test-time augmentation",0.8567,0.8456,0.9664,-0.0205,-0.0224
+"(vii) GCN -> param-matched conv",0.8567,0.8481,0.9587,-0.0205,-0.0200

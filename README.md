@@ -95,6 +95,14 @@ stored in `results/results.json`.
 > breach. This repository's run lands **above** them on every headline metric, and the
 > structural quantities (parameter count, edge count, partition sizes) reproduce exactly.
 
+> **Read the ablation before citing the architecture.** The controlled experiments below
+> do not support this repository's own central design claim: removing the graph branch
+> *improves* test accuracy, and no baseline is distinguishable from the proposed model by
+> a paired McNemar test. Both results are reported in full rather than buried, because the
+> point of building the parameter-matched control was to be able to believe the answer
+> either way. What this work supports is the leakage-controlled protocol and the
+> measurements — not the network.
+
 ### Headline (Table: overall test performance)
 
 Held-out test set, *n* = 293, left at its natural class distribution.
@@ -215,17 +223,73 @@ heavily. Eight grey levels between Normal and Osteoporosis is far too weak for a
 threshold rule. The significance is a function of *n* = 1,947; the effect size is what
 says the task needs a learned representation.
 
-### Component ablation (`03_ablation.py`)
+### Component ablation — the graph branch does not earn its place (`03_ablation.py`)
 
-<!--ABLATION-->
+Each variant changes exactly one config section; (ii) and (vi) are inference-time
+changes to the retained checkpoint, so those rows are exact. Δ is against the full model.
+
+| Variant | Acc. | Macro F1 | AUC | Δ acc. |
+|---|---|---|---|---|
+| Full model (proposed) | 87.71% | 0.8680 | 0.9658 | — |
+| **(i) w/o GCN branch** | **88.40%** | **0.8756** | 0.9667 | **+0.68** |
+| (ii) w/o auxiliary branch | 86.35% | 0.8516 | 0.9657 | −1.37 |
+| (iii) w/o dual mean–max pooling | 84.98% | 0.8358 | 0.9627 | −2.73 |
+| (iv) w/o CLAHE preprocessing | 86.01% | 0.8451 | 0.9589 | −1.71 |
+| (v) w/o class-balancing augmentation | 88.05% | 0.8753 | 0.9615 | +0.34 |
+| (vi) w/o test-time augmentation | 85.67% | 0.8456 | 0.9664 | −2.05 |
+| (vii) GCN → param-matched conv | 85.67% | 0.8481 | 0.9587 | −2.05 |
+
+**This is a negative result for the architecture, and it is reported as one.** Removing
+the graph branch entirely (i) is the *best* row in the table. The parameter-matched
+convolutional control (vii) was built to answer "does the graph do anything a convolution
+cannot?" — but that question does not arise once (i) beats the full model: neither
+relational formulation improves on the plain backbone. The repository's headline claim is
+therefore the protocol and the measurement, not the network.
+
+Two caveats, both of which cut against over-reading the table. The differences are small —
++0.68 points on 293 images is two radiographs — and none of them is bounded by a
+multi-seed interval yet. What survives that caveat is the direction, which is consistent
+across (i), (v) and (vii): the components motivated by *relational reasoning* and by
+*class rebalancing* are the two that are not helping. The dual mean–max readout (−2.73),
+TTA (−2.05) and CLAHE (−1.71) are the parts carrying the result.
 
 ### Baselines under the identical protocol (`04_baselines.py`)
 
-<!--BASELINES-->
+Same preprocessing, partition, augmentation and training budget — only the architecture
+varies. *p* is the exact McNemar test against the proposed model on the same 293 images,
+which conditions on the discordant pairs rather than comparing two accuracy figures.
+
+| Model | Acc. | Macro F1 | AUC | Params (M) | *p* vs proposed |
+|---|---|---|---|---|---|
+| EfficientNetB0 + GAP + FC | 86.01% | 0.8474 | 0.9666 | 4.01 | 0.3018 |
+| ResNet50 | 83.96% | 0.8191 | 0.9633 | 23.51 | 0.0522 |
+| **DenseNet121** | **87.71%** | **0.8692** | **0.9732** | 6.96 | 1.0000 |
+| VGG19 | 84.64% | 0.8340 | 0.9480 | 20.03 | 0.1221 |
+| **EfficientNet-GCN (proposed)** | **87.71%** | 0.8680 | 0.9658 | **5.03** | — |
+
+**No baseline is separated from the proposed model at the 5% level.** DenseNet121 ties it
+on accuracy, beats it on macro F1 and AUC, and splits the discordant pairs 7/7 for
+*p* = 1.0000. The strongest defensible claim is parity at a smaller parameter budget
+(5.03 M vs 6.96 M), not better discrimination.
+
+The `Sarhan et al. (reimpl.)` row the manuscript originally planned is deliberately
+absent: that method's 97.50% is obtained with augmentation applied before partitioning, so
+reproducing it here would measure the ordering, not the architecture. `04_baselines.py
+--probe` is the instrument for that question and has not been run.
 
 ### Across-seed variability (`05_multiseed.py`)
 
-<!--MULTISEED-->
+**Not yet run.** This is the one gap remaining in the experimental record, and it is the
+one that matters most for reading the two tables above: several ablation rows differ by
+two or three images, which is well inside the movement a change of seed can produce.
+
+The `stage4_multiseed` Kaggle kernel is pushed with its inputs attached and its seed-42
+run already carried forward, but it needs one manual step — see
+[`docs/REPRODUCING.md`](docs/REPRODUCING.md). Kaggle's push API accepts a `machineShape`
+field and then ignores it, falling back to a P100 whose `sm_60` capability the current
+Kaggle PyTorch build does not support; the accelerator has to be set to **GPU T4 x2** in
+the notebook UI by hand. The entrypoint refuses to run on a pre-Volta device rather than
+burning an hour producing nothing, so a wrong-accelerator run costs 60 seconds and exits.
 
 ### Reproducing each result
 
@@ -450,6 +514,8 @@ Carried over from the manuscript, and worth stating in the repository too:
   extreme-boundary errors are the direct consequence.
 - **Some choices remain unablated**, notably the 320×320 input resolution and the
   random-erasing augmentation.
+- **The graph branch is not supported by its own ablation** (see above), and the
+  seed variance that would tell you how much of that to trust has not been measured.
 
 ---
 

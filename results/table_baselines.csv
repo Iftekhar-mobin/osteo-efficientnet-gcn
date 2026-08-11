@@ -1,0 +1,6 @@
+model,accuracy,macro_f1,auc,parameters_millions,mcnemar_p
+"EfficientNetB0 + GAP + FC",0.8601,0.8474,0.9666,4.01,0.3018
+"ResNet50",0.8396,0.8191,0.9633,23.51,0.0522
+"DenseNet121",0.8771,0.8692,0.9732,6.96,1.0000
+"VGG19",0.8464,0.8340,0.9480,20.03,0.1221
+"EfficientNet-GCN (proposed)",0.8771,0.8680,0.9658,,

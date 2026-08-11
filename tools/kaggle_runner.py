@@ -172,6 +172,37 @@ if torch.cuda.is_available():
                          f"not supported by this PyTorch build -- set the accelerator "
                          f"to 'GPU T4 x2' in the notebook UI and re-run")
 
+# 3b. resolve the raw dataset directory by structure, not by assumed layout.
+# Kaggle has mounted an attached dataset at both /kaggle/input/<slug>/... and
+# /kaggle/input/datasets/<owner>/<slug>/..., and the two are not interchangeable:
+# a stage that hard-codes one silently fails preprocessing on the other. Locate
+# the directory that actually holds the three class folders and substitute it
+# for the hint compiled into STEPS.
+CLASSES = ("Normal", "Osteopenia", "Osteoporosis")
+def find_raw():
+    root = Path("/kaggle/input")
+    candidates = [root]
+    for depth in range(1, 5):
+        candidates += list(root.glob("/".join(["*"] * depth)))
+    for base in candidates:
+        try:
+            if base.is_dir() and all((base / c).is_dir() for c in CLASSES):
+                return str(base)
+        except OSError:
+            continue
+    return None
+
+resolved = find_raw()
+if resolved is None:
+    print("WARNING: no directory under /kaggle/input holds", CLASSES, flush=True)
+    for p in sorted(Path("/kaggle/input").glob("*/*"))[:40]:
+        print("   ", p, flush=True)
+elif resolved != RAW_HINT:
+    print(f"raw dir resolved to {resolved!r} (hint was {RAW_HINT!r})", flush=True)
+    STEPS = [[resolved if arg == RAW_HINT else arg for arg in step] for step in STEPS]
+else:
+    print("raw dir:", resolved, flush=True)
+
 # 4. run the stage
 failures = []
 for step in STEPS:
@@ -209,6 +240,7 @@ def build_script(stage: str) -> str:
         f"PAYLOAD = {payload!r}\n"
         f"STAGE = {stage!r}\n"
         f"STEPS = {json.dumps(spec['steps'])}\n"
+        f"RAW_HINT = {RAW!r}\n"
         f"EXTRA_PIP = {json.dumps(['lime'])}\n"
         f"NEEDS_PRIOR = {bool(spec['needs'])}\n"
     )

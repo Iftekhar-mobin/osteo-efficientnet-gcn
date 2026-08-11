@@ -95,13 +95,14 @@ stored in `results/results.json`.
 > breach. This repository's run lands **above** them on every headline metric, and the
 > structural quantities (parameter count, edge count, partition sizes) reproduce exactly.
 
-> **Read the ablation before citing the architecture.** The controlled experiments below
-> do not support this repository's own central design claim: removing the graph branch
-> *improves* test accuracy, and no baseline is distinguishable from the proposed model by
-> a paired McNemar test. Both results are reported in full rather than buried, because the
-> point of building the parameter-matched control was to be able to believe the answer
-> either way. What this work supports is the leakage-controlled protocol and the
-> measurements — not the network.
+> **Read the ablation and the seed spread before citing the architecture.** The controlled
+> experiments below do not support this repository's own central design claim: removing
+> the graph branch leaves accuracy unchanged within noise, and no baseline is
+> distinguishable from the proposed model by a paired McNemar test. The headline 87.71%
+> is also above all three seeds — 85.55% ± 2.09 is the honest central estimate. All of it
+> is reported in full rather than buried, because the point of building the
+> parameter-matched control was to be able to believe the answer either way. What this
+> work supports is the leakage-controlled protocol and the measurements — not the network.
 
 ### Headline (Table: overall test performance)
 
@@ -240,18 +241,17 @@ changes to the retained checkpoint, so those rows are exact. Δ is against the f
 | (vii) GCN → param-matched conv | 85.67% | 0.8481 | 0.9587 | −2.05 |
 
 **This is a negative result for the architecture, and it is reported as one.** Removing
-the graph branch entirely (i) is the *best* row in the table. The parameter-matched
+the graph branch entirely (i) does not degrade the model. The parameter-matched
 convolutional control (vii) was built to answer "does the graph do anything a convolution
-cannot?" — but that question does not arise once (i) beats the full model: neither
-relational formulation improves on the plain backbone. The repository's headline claim is
-therefore the protocol and the measurement, not the network.
+cannot?" — and the answer, once (i) matches the full model, is that neither relational
+formulation separates from the plain backbone.
 
-Two caveats, both of which cut against over-reading the table. The differences are small —
-+0.68 points on 293 images is two radiographs — and none of them is bounded by a
-multi-seed interval yet. What survives that caveat is the direction, which is consistent
-across (i), (v) and (vii): the components motivated by *relational reasoning* and by
-*class rebalancing* are the two that are not helping. The dual mean–max readout (−2.73),
-TTA (−2.05) and CLAHE (−1.71) are the parts carrying the result.
+**Read this table against the seed spread below before ranking anything in it.** The
+run-to-run floor is 1.71 points and the seed SD is 2.09; only row (iii) clears either.
+The +0.68 for removing the graph branch is two radiographs — it does **not** mean
+removing the graph helps, and this repository does not claim it does. The claim is the
+absence of a distinguishable effect, which is a weaker statement and a much harder one to
+explain away.
 
 ### Baselines under the identical protocol (`04_baselines.py`)
 
@@ -277,19 +277,39 @@ absent: that method's 97.50% is obtained with augmentation applied before partit
 reproducing it here would measure the ordering, not the architecture. `04_baselines.py
 --probe` is the instrument for that question and has not been run.
 
-### Across-seed variability (`05_multiseed.py`)
+### Across-seed variability — the number that reframes everything above (`05_multiseed.py`)
 
-**Not yet run.** This is the one gap remaining in the experimental record, and it is the
-one that matters most for reading the two tables above: several ablation rows differ by
-two or three images, which is well inside the movement a change of seed can produce.
+Three seeds, each re-drawing the partition as well as the initialisation.
 
-The `stage4_multiseed` Kaggle kernel is pushed with its inputs attached and its seed-42
-run already carried forward, but it needs one manual step — see
-[`docs/REPRODUCING.md`](docs/REPRODUCING.md). Kaggle's push API accepts a `machineShape`
-field and then ignores it, falling back to a P100 whose `sm_60` capability the current
-Kaggle PyTorch build does not support; the accelerator has to be set to **GPU T4 x2** in
-the notebook UI by hand. The entrypoint refuses to run on a pre-Volta device rather than
-burning an hour producing nothing, so a wrong-accelerator run costs 60 seconds and exits.
+| Metric | Mean | SD | Range | seed 42 | seed 7 | seed 1234 |
+|---|---|---|---|---|---|---|
+| Accuracy | 85.55% | ±2.09 | 83.28–87.37 | 86.01 | 87.37 | 83.28 |
+| Macro F1 | 0.8422 | ±0.0240 | 0.8158–0.8628 | 0.8481 | 0.8628 | 0.8158 |
+| AUC | 0.9585 | ±0.0061 | 0.9544–0.9656 | 0.9656 | 0.9555 | 0.9544 |
+
+Two things follow, and both cut against the headline.
+
+**The 87.71% headline is a favourable draw.** It is *higher than all three seeds*, and
+the honest central estimate for this architecture on this corpus is 85.55% ± 2.09.
+
+**There is a nondeterminism floor below the seed spread.** `run_full` and
+`run_seed42` share a seed *and* an identical test partition — verified by comparing the
+stored label vectors — and still reach **87.71% vs 86.01%**, disagreeing on **15 of 293**
+images. That 1.71-point gap is neither seed nor partition variance; it is mixed-precision
+accumulation order on the GPU, which `set_seed` does not pin. `scripts/10` recomputes it
+from the stored predictions on every run rather than taking it on trust.
+
+**So the ablation cannot be read as a ranking.** Only one row — dual mean–max pooling, at
+−2.73 — clears the 1.71-point floor. The +0.68 for removing the graph branch is two
+radiographs and well inside it. The defensible claim is not that removing the graph
+*helps*; it is that the graph branch **cannot be distinguished from its own absence**,
+which is what a component justified by a mechanism must not do.
+
+Reproducing this stage needs two settings applied by hand in the notebook UI after each
+push — **Accelerator → GPU T4 x2** and **Internet → on**. The push API accepts
+`machineShape` and `enableInternet` and honours neither, and a push resets both, so the
+order is push, then set, then Save Version. See
+[`docs/REPRODUCING.md`](docs/REPRODUCING.md) for what each failure looks like.
 
 ### Reproducing each result
 
@@ -514,8 +534,11 @@ Carried over from the manuscript, and worth stating in the repository too:
   extreme-boundary errors are the direct consequence.
 - **Some choices remain unablated**, notably the 320×320 input resolution and the
   random-erasing augmentation.
-- **The graph branch is not supported by its own ablation** (see above), and the
-  seed variance that would tell you how much of that to trust has not been measured.
+- **The graph branch is not supported by its own ablation** (see above). The seed
+  variance is now measured and is wide enough (SD 2.09 points) that only one ablation
+  row clears it; the remaining rows cannot be ordered from single runs.
+- **The headline accuracy is a favourable draw.** 87.71% exceeds all three seeds; the
+  central estimate is 85.55% ± 2.09.
 
 ---
 

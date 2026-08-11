@@ -66,18 +66,41 @@ Repeat for `stage2_ablation`, `stage3_baselines`, `stage4_multiseed`. Later stag
 attach earlier ones as kernel data sources, so the full model's checkpoint carries
 forward without retraining.
 
-**One manual step, and why it cannot be automated.** Kaggle's kernel-push API exposes
-only a boolean "GPU on", and the default GPU is a **P100 (sm_60)**, which the current
-Kaggle PyTorch build does not support — CUDA raises
-`no kernel image is available for execution on the device` on the first kernel launch.
-The accelerator must be set to **GPU T4 x2** in the notebook UI, and an API push resets
-it. The entrypoint therefore refuses to run on a pre-Volta device rather than silently
-producing nothing:
+**Two manual steps, and why they cannot be automated.** The push API accepts the
+relevant fields and then ignores them, so both must be set in the notebook UI under
+**Settings**, and **an API push resets both**. Push first, then set them, then Save
+Version — in that order, or the push undoes the settings.
 
-```python
-if torch.cuda.get_device_capability(0)[0] < 7:
-    raise SystemExit("... set the accelerator to 'GPU T4 x2' in the notebook UI")
-```
+1. **Accelerator → GPU T4 x2.** The default is a **P100 (sm_60)**, which the current
+   Kaggle PyTorch build does not support; CUDA raises `no kernel image is available for
+   execution on the device` on the first launch. The push body's `enableGpu` is only a
+   boolean, and passing `machineShape: "GPU_T4X2"` returns HTTP 200 and still allocates
+   a P100. The entrypoint refuses to run on a pre-Volta device rather than silently
+   producing nothing:
+
+   ```python
+   if torch.cuda.get_device_capability(0)[0] < 7:
+       raise SystemExit("... set the accelerator to 'GPU T4 x2' in the notebook UI")
+   ```
+
+2. **Internet → on.** The push body sets `enableInternet: True` and this is likewise not
+   honoured. Without it the torchvision ImageNet weights cannot be downloaded and
+   training dies partway through the first run with
+
+   ```
+   urllib.error.URLError: <urlopen error [Errno -3] Temporary failure in name resolution>
+   ```
+
+   The Settings menu item is a toggle whose label states the action, not the state:
+   "Turn on internet" means internet is currently **off**.
+
+Verify both before Save Version. A wrong accelerator costs 60 seconds; missing internet
+costs about six minutes, because preprocessing completes first.
+
+Note also that the mount path for an attached dataset varies between
+`/kaggle/input/<slug>/...` and `/kaggle/input/datasets/<owner>/<slug>/...`. The entrypoint
+resolves it by looking for the directory that holds the three class folders rather than
+assuming either layout, and prints what it resolved to.
 
 ## Checking a run
 

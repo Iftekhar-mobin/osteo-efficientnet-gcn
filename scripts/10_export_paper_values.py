@@ -202,6 +202,35 @@ def main() -> int:
             lines.append(macro(f"Seed{tag}Min", fmt(stats["min"])))
             lines.append(macro(f"Seed{tag}Max", fmt(stats["max"])))
         lines.append(macro("NSeeds", len(bundle["multiseed"]["seeds"])))
+        # LaTeX control sequences are letters only, so a seed of 42 cannot appear in
+        # a macro name as digits -- spell it out.
+        words = {"0": "Zero", "1": "One", "2": "Two", "3": "Three", "4": "Four",
+                 "5": "Five", "6": "Six", "7": "Seven", "8": "Eight", "9": "Nine"}
+        spell = lambda s: "".join(words[c] for c in str(s))  # noqa: E731
+        for seed, value in bundle["multiseed"]["summary"]["accuracy"]["per_seed"].items():
+            lines.append(macro(f"SeedAccS{spell(seed)}", PCT(value)))
+
+        # Fixed-seed replication gap. run_full and run_seed42 use the same seed and,
+        # as asserted below, the same test partition, so any difference between them
+        # is run-to-run nondeterminism alone -- the floor beneath which no ablation
+        # delta can be interpreted. Computed here rather than quoted, because the
+        # comparison is only meaningful if the partitions really are identical.
+        pred_a = RESULTS / f"predictions_{args.run}.npz"
+        pred_b = RESULTS / "predictions_seed42.npz"
+        run_b = RESULTS / "run_seed42.json"
+        if pred_a.exists() and pred_b.exists() and run_b.exists():
+            import numpy as np
+            a, b = np.load(pred_a), np.load(pred_b)
+            if np.array_equal(a["labels"], b["labels"]):
+                acc_a = bundle["test"]["accuracy"]
+                acc_b = load_json(run_b)["test"]["accuracy"]
+                agree = int((a["proba"].argmax(1) == b["proba"].argmax(1)).sum())
+                lines.append(macro("ReplicaAccA", PCT(acc_a)))
+                lines.append(macro("ReplicaAccB", PCT(acc_b)))
+                lines.append(macro("ReplicaGap", f"{100 * abs(acc_a - acc_b):.2f}"))
+                lines.append(macro("ReplicaDisagree", len(a["labels"]) - agree))
+            else:
+                print("  note: seed-42 partitions differ; replication gap not exported")
 
     if "fusion_sweep" in bundle:
         sweep = bundle["fusion_sweep"]
